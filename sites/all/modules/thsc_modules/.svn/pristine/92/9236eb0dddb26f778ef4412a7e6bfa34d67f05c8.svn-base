@@ -1,0 +1,1344 @@
+<?php
+
+/**
+ * @file
+ * THSC Game module
+ */
+
+function thsc_game_node_info() {
+  return array(
+  	'thsc_game' => array(
+  	  'name' => 'Game',
+  	  'base' => 'thsc_game',
+  	  'description' => 'Game Content Type for THSC',
+  	  'has_title' => FALSE,
+  	  'locked' => TRUE,
+    ),
+  );
+}
+
+function thsc_game_load() {
+  $cmd = 'SELECT g.nid, g.row_id, g.team_id, g.score_gf, g.score_ga';
+
+}
+
+
+function thsc_game_permission() {
+  return array(
+    'administer thsc_game' => array(
+      'title' => t('Administer Games'),
+      'description' => 'Manage Games'
+    ),
+    'edit thsc_game' => array(
+      'title' => 'Enter Game Result',
+      'description' => 'Permits entering game results or change the date, but will not be able to change the teams'
+    )
+  );
+}
+
+function thsc_game_menu() {
+  $items['admin/thsc_game/%/setscores'] = array(
+    'title' => 'Game Scores',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_set_scores',
+      2
+    ),
+    'access arguments' => array(
+      'edit thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/list'] = array(
+    'title' => 'View Games',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_group_select_form',
+      'game'
+    ),
+    'access arguments' => array(
+      'edit thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/practice/list'] = array(
+    'title' => 'View Practices',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_group_select_form',
+      'practice'
+    ),
+    'access arguments' => array(
+      'edit thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/list/%'] = array(
+    'title callback' => 'thsc_game_get_title',
+    'title arguments' => array(
+      3,
+      'game',
+    ),
+    'page callback' => 'thsc_game_list',
+    'page arguments' => array(
+      3
+    ),
+    'access arguments' => array(
+      'administer thsc_game',
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/practice/list/%'] = array(
+    'title callback' => 'thsc_game_get_title',
+    'title arguments' => array(
+      4,
+      'practice'
+    ),
+    'page callback' => 'thsc_game_list_practice',
+    'page arguments' => array(
+      4
+    ),
+    'access arguments' => array(
+      'edit thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/add/%'] = array(
+    'title' => 'Add Game',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_add_form',
+      3
+    ),
+    'access arguments' => array(
+      'administer thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/edit/%'] = array(
+    'title' => 'Edit Game',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_edit_form',
+      3
+    ),
+    'access arguments' => array(
+      'administer thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/practice/add/%'] = array(
+    'title' => 'Add Practice',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_practice_add_form',
+      4
+    ),
+    'access arguments' => array(
+      'administer thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/thsc_game/practice/edit/%'] = array(
+    'title' => 'Edit Practice',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_game_practice_edit_form',
+      4
+    ),
+    'access arguments' => array(
+      'administer thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_game/standing/%'] = array(
+  	'title callback' => 'thsc_game_get_title',
+    'title arguments' => array(
+      2,
+      'standing',
+    ),
+    'page callback' => 'thsc_game_standing',
+    'page arguments' => array(
+      2,
+    ),
+    'access arguments' => array(
+    	'access content',
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['thsc_game/teamschedule/%'] = array(
+    'title callback' => 'thsc_game_teamschedule_title',
+    'title arguments' => array(
+      2
+    ),
+    'page callback' => 'thsc_game_teamschedule',
+    'page arguments' => array(
+    	2,
+      FALSE,
+    ),
+    'access arguments' => array(
+    	'access content',
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['thsc_game/teamschedule/%/live'] = array(
+    'title callback' => 'thsc_game_teamschedule_title',
+    'title arguments' => array(
+      2
+    ),
+    'page callback' => 'thsc_game_teamschedule',
+    'page arguments' => array(
+    	2,
+      TRUE,
+    ),
+    'access arguments' => array(
+    	'access content',
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['thsc_game/aplayerschedule/%/%'] = array(
+    'title callback' => 'thsc_game_aplayerschedule_title',
+    'title arguments' => array(
+      2
+    ),
+    'page callback' => 'thsc_game_aplayerschedule',
+    'page arguments' => array(
+    	2,
+      3,
+    ),
+    'access arguments' => array(
+    	'access content',
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function thsc_game_view($game_id) {
+  return "under construction";
+}
+
+function thsc_game_group_select_form($form, &$form_state, $type) {
+  $options = array();
+  $groups = thsc_group_load_multiple();
+  foreach ($groups as $group) {
+    $options[$group->group_id] = $group->group_name;
+  }
+  $form['group_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Please select a group',
+    '#options' => $options,
+    '#required' => TRUE
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#weight' => 100
+  );
+
+  if ($type == 'practice') {
+    $form['submit']['#submit'] = array(
+      'thsc_game_group_select_form_practice_submit'
+    );
+  }
+
+  return $form;
+}
+
+function thsc_game_group_select_form_submit($form, &$form_state) {
+  $group_id = $form_state['values']['group_id'];
+  if ($group_id) {
+    $form_state['redirect'] = 'admin/thsc_game/list/' . $group_id;
+  }
+  else {
+    drupal_set_message('Please select a group and try again!', 'warning');
+    $form_state['redirect'] = 'admin/thsc_game/list';
+  }
+}
+
+function thsc_game_group_select_form_practice_submit($form, &$form_state) {
+  $group_id = $form_state['values']['group_id'];
+  if ($group_id) {
+    $form_state['redirect'] = 'admin/thsc_game/practice/list/' . $group_id;
+  }
+  else {
+    drupal_set_message('Please select a group and try again!', 'warning');
+    $form_state['redirect'] = 'admin/thsc_game/practice/list';
+  }
+}
+
+function thsc_game_get_title($group_id, $type) {
+  $group = thsc_group_load($group_id);
+  if (is_object($group)) {
+    if ($type == 'game') {
+      return "Games of Group " . $group->group_name;
+    }
+    else if ($type == 'standing') {
+      return "Standings - " . $group->group_name;
+    }
+    else {
+      return "Practices of Group " . $group->group_name;
+    }
+  }
+  else {
+    return "Group not found!";
+  }
+}
+
+function thsc_game_list($group_id) {
+  $group = thsc_group_load($group_id);
+  if (empty($group)) {
+    return "Group not found!";
+  }
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    return "There is no ACTIVE season at this moment!";
+  }
+  $content = array();
+  $content['add_game'] = array(
+    '#type' => 'markup',
+    '#markup' => l('Add Game', 'admin/thsc_game/add/' . $group_id),
+    '#weight' => -20
+  );
+
+  $query = db_select('thsc_game', 'g')->condition('g.season_id', $current_seasonid, '=');
+  $query->join('thsc_team', 't', 'g.team_id = t.team_id');
+  $query->fields('g', array(
+    'game_id',
+    'row_id',
+    'season_id',
+    'team_id',
+    'game_time',
+    'score_gf',
+    'score_ga',
+    'event_nid'
+  ))->fields('t', array(
+    'team_name'
+  ))->orderBy('g.game_time')->orderBy('g.row_id');
+
+  $result = $query->execute();
+  $games = array();
+  $rows = array();
+  // first build the array of games. each set of records (2 records) go into one game item
+  foreach ($result as $rec) {
+    if ($rec->row_id == 1) {
+      $games[$rec->game_id] = $rec;
+      $games[$rec->game_id]->team_a_id = $rec->team_id;
+      $games[$rec->game_id]->team_a_name = $rec->team_name;
+    }
+    elseif ($rec->row_id == 2) {
+      $games[$rec->game_id]->team_b_id = $rec->team_id;
+      $games[$rec->game_id]->team_b_name = $rec->team_name;
+    }
+  }
+  // now build the output from games array
+  $use_datatables = module_exists('datatables');
+  foreach ($games as $game_id => $game) {
+    $row_data = array(
+      'game_time' => l(format_date($game->game_time, 'custom', 'D M d, Y H:i'), 'event-created/day/' . format_date($game->game_time, 'custom', 'Y-m-d')),
+      'edit_game' => l('Edit Game', 'admin/thsc_game/edit/' . $game_id),
+      'set_scores' => l('Set Scores', 'admin/thsc_game/' . $game_id . '/setscores'),
+      'team_a' => $game->team_a_name,
+      'score_gf' => $game->score_gf,
+      'team_b' => $game->team_b_name,
+      'score_ga' => $game->score_ga
+    );
+    if ($use_datatables) {
+      $rows[] = $row_data;
+    }
+    else {
+      $rows[] = array(
+        'data' => $row_data
+      );
+    }
+  }
+
+  if ($use_datatables) {
+    $header = array(
+      array(
+        'data' => 'Time',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => FALSE
+        )
+      ),
+      array(
+        'data' => 'Edit',
+        'datatable_options' => array(
+          'bSortable' => FALSE,
+          'bSearchable' => FALSE
+        )
+      ),
+      array(
+        'data' => 'Set Scores',
+        'datatable_options' => array(
+          'bSortable' => FALSE,
+          'bSearchable' => FALSE
+        )
+      ),
+      array(
+        'data' => 'Home Team',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Score',
+        'datatable_options' => array(
+          'bSortable' => FALSE,
+          'bSearchable' => FALSE
+        )
+      ),
+      array(
+        'data' => 'Away Team',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Score',
+        'datatable_options' => array(
+          'bSortable' => FALSE,
+          'bSearchable' => FALSE
+        )
+      )
+    );
+
+    $attributes['datatable_options'] = array(
+      'bFilter' => TRUE,
+      'bInfo' => TRUE,
+      'bSort' => TRUE
+    );
+
+    $content['entity_datatable'] = array(
+      '#theme' => 'datatable',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#attributes' => $attributes
+    );
+  }
+  else {
+    $content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(
+        'Time',
+        'Edit',
+        'Set Scores',
+        'Home Team',
+        'Score',
+        'Away Team',
+        'Score'
+      )
+    );
+  }
+
+  return $content;
+}
+
+function thsc_game_list_practice($group_id) {
+  $group = thsc_group_load($group_id);
+  if (empty($group)) {
+    return "Group not found!";
+  }
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    return "There is no ACTIVE season at this moment!";
+  }
+  $content = array();
+  $content['add_practice'] = array(
+    '#type' => 'markup',
+    '#markup' => l('Add Practice', 'admin/thsc_game/practice/add/' . $group_id),
+    '#weight' => -20
+  );
+
+  $query = db_select('thsc_practice', 'p')->condition('p.season_id', $current_seasonid, '=');
+  $query->join('thsc_team', 't', 'p.team_id = t.team_id');
+  $query->fields('p', array(
+    'p_id',
+    'team_id',
+    'p_time',
+    'event_nid'
+  ))->fields('t', array(
+    'team_name'
+  ))->orderBy('p.p_time');
+
+  $result = $query->execute();
+  $rows = array();
+  $use_datatables = module_exists('datatables');
+  foreach ($result as $practice) {
+    $row_data = array(
+      'p_time' => l(format_date($practice->p_time, 'custom', 'D M d, Y H:i'), 'event-created/day/' . format_date($practice->p_time, 'custom', 'Y-m-d')),
+      'edit_practice' => l('Edit Practice', 'admin/thsc_game/practice/edit/' . $practice->p_id),
+      'team' => $practice->team_name
+    );
+    if ($use_datatables) {
+      $rows[] = $row_data;
+    }
+    else {
+      $rows[] = array(
+        'data' => $row_data
+      );
+    }
+  }
+
+  if ($use_datatables) {
+    $header = array(
+      array(
+        'data' => 'Time',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => FALSE
+        )
+      ),
+      array(
+        'data' => 'Edit',
+        'datatable_options' => array(
+          'bSortable' => FALSE,
+          'bSearchable' => FALSE
+        )
+      ),
+      array(
+        'data' => 'Team',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => TRUE
+        )
+      )
+    );
+
+    $attributes['datatable_options'] = array(
+      'bFilter' => TRUE,
+      'bInfo' => TRUE,
+      'bSort' => TRUE
+    );
+
+    $content['entity_datatable'] = array(
+      '#theme' => 'datatable',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#attributes' => $attributes
+    );
+  }
+  else {
+    $content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(
+        'Time',
+        'Edit',
+        'Team'
+      )
+    );
+  }
+
+  return $content;
+}
+
+function thsc_game_add_form($form, &$form_state, $group_id) {
+  $group = thsc_group_load($group_id);
+  if (!$group) {
+    drupal_set_message('Group Not Found!', 'error');
+    return $form;
+  }
+
+  $form['group_id'] = array(
+    '#type' => 'value',
+    '#value' => $group_id
+  );
+
+  $form['group_name'] = array(
+    '#type' => 'item',
+    '#title' => 'Group',
+    '#markup' => $group->group_name,
+    '#weight' => -20
+  );
+
+  $teams = thsc_team_load_multiple(FALSE, array(
+    'group_id' => $group_id
+  ));
+  $options = array();
+  foreach ($teams as $team) {
+    $options[$team->team_id] = $team->team_name;
+  }
+
+  $form['game_time'] = array(
+    '#type' => 'date_popup',
+    '#title' => 'Date/Time',
+    '#format' => 'Y-m-d H:i',
+    '#required' => TRUE,
+    '#default_value' => 0,
+    '#weight' => -18
+  );
+
+  $form['team_a'] = array(
+    '#type' => 'select',
+    '#title' => 'Home Team',
+    '#options' => $options,
+    '#weight' => -10
+  );
+
+  $form['team_b'] = array(
+    '#type' => 'select',
+    '#title' => 'Away Team',
+    '#options' => $options,
+    '#weight' => -8
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    '#weight' => 10
+  );
+
+  return $form;
+}
+
+function thsc_game_add_form_validate($form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    form_set_error('#team_a', 'There is no season marked "ACTIVE" at this moment!');
+  }
+  if ($form_state['values']['team_a'] == $form_state['values']['team_b']) {
+    form_set_error('#team_a', 'You cannot selec the same team in both ends!');
+  }
+}
+
+function thsc_game_add_form_submit($form, &$form_state) {
+  $result = db_query('SELECT MAX(game_id) as max_id FROM {thsc_game}');
+  if (!empty($result)) {
+    $max_id = $result->fetchObject()->max_id;
+  }
+  else {
+    $max_id = 0;
+  }
+  $team_a = thsc_team_load($form_state['values']['team_a']);
+  $team_b = thsc_team_load($form_state['values']['team_b']);
+  $game = new stdClass();
+  // add 1 to get id for new game
+  $game->game_id = $max_id + 1;
+  $game->season_id = variable_get('thsc_active_season', 0);
+  $date = new DateObject($form_state['values']['game_time'], NULL, 'Y-m-d H:i');
+  $game->game_time = $date->getTimestamp();
+  // creating event node for this game
+  $node = new stdClass();
+  $node->type = 'event_calendar';
+  node_object_prepare($node);
+  $node->title = 'Game ' . $team_a->team_name . ' vs ' . $team_b->team_name;
+  $node->language = LANGUAGE_NONE;
+  $node->body[$node->language][0]['value'] = '';
+  $node->body[$node->language][0]['summary'] = '';
+  $node->body[$node->language][0]['format'] = 'filtered_html';
+  $node->status = 1;
+  $node->comment = 1;
+  $node->event_calendar_status[$node->language][0]['tid'] = 1;
+  $node->event_calendar_date[$node->language][0]['value'] = date('Y-m-d H:i:s', $game->game_time);
+  $node->event_calendar_date[$node->language][0]['value2'] = date('Y-m-d H:i:s', $game->game_time + 3600);
+  if ($node = node_submit($node)) {
+    node_save($node);
+    $game->event_nid = $node->nid;
+    $cmd = 'INSERT INTO {thsc_game} (season_id, game_id, row_id, team_id, event_nid, game_time) ' . 'VALUES (:season_id, :game_id, :row_id, :team_id, :event_nid, :game_time) ';
+    db_query($cmd, array(
+      ':season_id' => $game->season_id,
+      ':game_id' => $game->game_id,
+      ':row_id' => 1,
+      ':team_id' => $team_a->team_id,
+      ':event_nid' => $game->event_nid,
+      ':game_time' => $game->game_time
+    ));
+    db_query($cmd, array(
+      ':season_id' => $game->season_id,
+      ':game_id' => $game->game_id,
+      ':row_id' => 2,
+      ':team_id' => $team_b->team_id,
+      ':event_nid' => $game->event_nid,
+      ':game_time' => $game->game_time
+    ));
+  }
+  else {
+    drupal_set_message('Error creating event for the game!', 'error');
+  }
+
+  $form_state['redirect'] = 'admin/thsc_game/list/' . $form_state['values']['group_id'];
+}
+
+function thsc_game_edit_form($form, &$form_state, $game_id) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    drupal_set_message("There is no ACTIVE season at this moment!", 'error');
+    return array();
+  }
+
+  $query = db_select('thsc_game', 'g')->condition('g.season_id', $current_seasonid, '=');
+  $query->condition('g.game_id', $game_id, '=');
+  $query->join('thsc_team', 't', 'g.team_id = t.team_id');
+  $query->fields('g', array(
+    'game_id',
+    'row_id',
+    'season_id',
+    'team_id',
+    'game_time',
+    'score_gf',
+    'score_ga',
+    'event_nid'
+  ))->fields('t', array(
+    'team_name'
+  ))->orderBy('g.row_id');
+  $result = $query->execute();
+  $game = new stdClass();
+  // first build the array of games. each set of records (2 records) go into one game item
+  foreach ($result as $rec) {
+    if ($rec->row_id == 1) {
+      $game = $rec;
+      $game->team_a_id = $rec->team_id;
+      $game->team_a_name = $rec->team_name;
+    }
+    elseif ($rec->row_id == 2) {
+      $game->team_b_id = $rec->team_id;
+      $game->team_b_name = $rec->team_name;
+    }
+  }
+  $team_a = thsc_team_load($game->team_a_id);
+  $teams = thsc_team_load_multiple(FALSE, array(
+    'group_id' => $team_a->group_id
+  ));
+  $options = array();
+  foreach ($teams as $team) {
+    $options[$team->team_id] = $team->team_name;
+  }
+
+  $form['game'] = array(
+    '#type' => 'value',
+    '#value' => $game
+  );
+
+  $form['game_time'] = array(
+    '#type' => 'date_popup',
+    '#title' => 'Date/Time',
+    '#format' => 'Y-m-d H:i',
+    '#required' => TRUE,
+    '#default_value' => format_date($game->game_time, 'custom', 'Y-m-d H:i'),
+    '#weight' => -18
+  );
+
+  $form['team_a'] = array(
+    '#type' => 'select',
+    '#title' => 'Home Team',
+    '#options' => $options,
+    '#default_value' => $game->team_a_id,
+    '#weight' => -10
+  );
+
+  $form['team_b'] = array(
+    '#type' => 'select',
+    '#title' => 'Away Team',
+    '#options' => $options,
+    '#default_value' => $game->team_b_id,
+    '#weight' => -8
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    '#weight' => 10
+  );
+
+  if (user_access('administer thsc_game')) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => 'Delete',
+      '#submit' => array(
+        'thsc_game_edit_form_delete'
+      ),
+      '#weight' => 20
+    );
+  }
+
+  return $form;
+}
+
+function thsc_game_edit_form_validate($form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    form_set_error('#team_a', 'There is no season marked "ACTIVE" at this moment!');
+  }
+  if ($form_state['values']['team_a'] == $form_state['values']['team_b']) {
+    form_set_error('#team_a', 'You cannot selec the same team in both ends!');
+  }
+}
+
+function thsc_game_edit_form_submit($form, &$form_state) {
+  $team_a = thsc_team_load($form_state['values']['team_a']);
+  $team_b = thsc_team_load($form_state['values']['team_b']);
+  $game = $form_state['values']['game'];
+  $game->team_a_id = $team_a->team_id;
+  $game->team_b_id = $team_b->team_id;
+  $date = new DateObject($form_state['values']['game_time'], NULL, 'Y-m-d H:i');
+  $game->game_time = $date->getTimestamp();
+  $node = node_load($game->event_nid);
+  $node->title = $team_a->team_name . ' vs ' . $team_b->team_name;
+  $node->event_calendar_date[$node->language][0]['value'] = date('Y-m-d H:i:s', $game->game_time);
+  $node->event_calendar_date[$node->language][0]['value2'] = date('Y-m-d H:i:s', $game->game_time + 3600);
+  node_save($node);
+  $cmd = 'UPDATE {thsc_game} SET team_id = :team_id, game_time = :game_time WHERE season_id = :season_id' . ' AND game_id = :game_id AND row_id = :row_id ';
+  db_query($cmd, array(
+    ':team_id' => $game->team_a_id,
+    ':game_time' => $game->game_time,
+    ':season_id' => $game->season_id,
+    ':game_id' => $game->game_id,
+    ':row_id' => 1
+  ));
+  db_query($cmd, array(
+    ':team_id' => $game->team_b_id,
+    ':game_time' => $game->game_time,
+    ':season_id' => $game->season_id,
+    ':game_id' => $game->game_id,
+    ':row_id' => 2
+  ));
+
+  $form_state['redirect'] = 'admin/thsc_game/list/' . $team_a->group_id;
+}
+
+function thsc_game_edit_form_delete($form, &$form_state) {
+  $game = $form_state['values']['game'];
+  node_delete($game->event_nid);
+  $cmd = 'DELETE FROM {thsc_game} WHERE game_id = :game_id';
+  db_query($cmd, array(
+    ':game_id' => $game->game_id
+  ));
+  $team_a = thsc_team_load($game->team_a_id);
+  $form_state['redirect'] = 'admin/thsc_game/list/' . $team_a->group_id;
+}
+
+function thsc_game_set_scores($form, &$form_state, $game_id) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    drupal_set_message("There is no ACTIVE season at this moment!", 'error');
+    return array();
+  }
+
+  $query = db_select('thsc_game', 'g')->condition('g.season_id', $current_seasonid, '=');
+  $query->condition('g.game_id', $game_id, '=');
+  $query->join('thsc_team', 't', 'g.team_id = t.team_id');
+  $query->fields('g', array(
+    'game_id',
+    'row_id',
+    'season_id',
+    'team_id',
+    'game_time',
+    'score_gf',
+    'score_ga',
+    'event_nid'
+  ))->fields('t', array(
+    'team_name'
+  ))->orderBy('g.row_id');
+  $result = $query->execute();
+  $game = new stdClass();
+  // first build the array of games. each set of records (2 records) go into one game item
+  foreach ($result as $rec) {
+    if ($rec->row_id == 1) {
+      $game = $rec;
+      $game->team_a_id = $rec->team_id;
+      $game->team_a_name = $rec->team_name;
+    }
+    elseif ($rec->row_id == 2) {
+      $game->team_b_id = $rec->team_id;
+      $game->team_b_name = $rec->team_name;
+    }
+  }
+  $form['game'] = array(
+    '#type' => 'value',
+    '#value' => $game
+  );
+
+  $form['game_time'] = array(
+    '#type' => 'markup',
+    '#title' => 'Date/Time',
+    '#markup' => format_date($game->game_time, 'custom', 'Y-m-d H:i'),
+    '#weight' => -18
+  );
+
+  $form['score_gf'] = array(
+    '#type' => 'textfield',
+    '#title' => $game->team_a_name,
+    '#default_value' => $game->score_gf,
+    '#weight' => -10
+  );
+
+  $form['score_ga'] = array(
+    '#type' => 'textfield',
+    '#title' => $game->team_b_name,
+    '#default_value' => $game->score_ga,
+    '#weight' => -8
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    '#weight' => 10
+  );
+
+  return $form;
+}
+
+function thsc_game_set_scores_submit($form, &$form_state) {
+  $game = $form_state['values']['game'];
+  $game->score_gf = $form_state['values']['score_gf'];
+  $game->score_ga = $form_state['values']['score_ga'];
+  if ($game->score_gf == $game->score_ga) {
+    $game->wtd_result_a = 'D';
+    $game->wtd_result_b = 'D';
+    $game->points_a = 1;
+    $game->points_b = 1;
+  }
+  else if ($game->score_gf > $game->score_ga) {
+    $game->wtd_result_a = 'W';
+    $game->wtd_result_b = 'L';
+    $game->points_a = 3;
+    $game->points_b = 0;
+  }
+  else {
+    $game->wtd_result_a = 'L';
+    $game->wtd_result_b = 'W';
+    $game->points_a = 0;
+    $game->points_b = 3;
+  }
+  $cmd = 'UPDATE {thsc_game} SET score_gf = :score_gf, score_ga = :score_ga,  wtd_result = :wtd_result, points = :points WHERE season_id = :season_id' . ' AND game_id = :game_id AND row_id = :row_id ';
+  db_query($cmd, array(
+    ':score_gf' => $game->score_gf,
+    ':score_ga' => $game->score_ga,
+    ':wtd_result' => $game->wtd_result_a,
+    ':points' => $game->points_a,
+    ':season_id' => $game->season_id,
+    ':game_id' => $game->game_id,
+    ':row_id' => 1
+  ));
+  db_query($cmd, array(
+    ':score_gf' => $game->score_ga,
+    ':score_ga' => $game->score_gf,
+    ':wtd_result' => $game->wtd_result_b,
+    ':points' => $game->points_b,
+    ':season_id' => $game->season_id,
+    ':game_id' => $game->game_id,
+    ':row_id' => 2
+  ));
+  $team_a = thsc_team_load($game->team_a_id);
+  $form_state['redirect'] = 'admin/thsc_game/list/' . $team_a->group_id;
+}
+
+function thsc_game_practice_add_form($form, &$form_state, $group_id) {
+  $group = thsc_group_load($group_id);
+  if (!$group) {
+    drupal_set_message('Group Not Found!', 'error');
+    return $form;
+  }
+
+  $form['group_id'] = array(
+    '#type' => 'value',
+    '#value' => $group_id
+  );
+
+  $form['group_name'] = array(
+    '#type' => 'item',
+    '#title' => 'Group',
+    '#markup' => $group->group_name,
+    '#weight' => -20
+  );
+
+  $teams = thsc_team_load_multiple(FALSE, array(
+    'group_id' => $group_id
+  ));
+  $options = array();
+  foreach ($teams as $team) {
+    $options[$team->team_id] = $team->team_name;
+  }
+
+  $form['p_time'] = array(
+    '#type' => 'date_popup',
+    '#title' => 'Date/Time',
+    '#format' => 'Y-m-d H:i',
+    '#required' => TRUE,
+    '#default_value' => 0,
+    '#weight' => -18
+  );
+
+  $form['team_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Team',
+    '#options' => $options,
+    '#weight' => -10
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    '#weight' => 10
+  );
+
+  return $form;
+}
+
+function thsc_game_practice_add_form_validate($form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    form_set_error('#team_a', 'There is no season marked "ACTIVE" at this moment!');
+  }
+}
+
+function thsc_game_practice_add_form_submit($form, &$form_state) {
+  $result = db_query('SELECT MAX(p_id) as max_id FROM {thsc_practice}');
+  if (!empty($result)) {
+    $max_id = $result->fetchObject()->max_id;
+  }
+  else {
+    $max_id = 0;
+  }
+  $team = thsc_team_load($form_state['values']['team_id']);
+  $practice = new stdClass();
+  // add 1 to get id for new game
+  $practice->p_id = $max_id + 1;
+  $practice->season_id = variable_get('thsc_active_season', 0);
+  $date = new DateObject($form_state['values']['p_time'], NULL, 'Y-m-d H:i');
+  $practice->p_time = $date->getTimestamp();
+  // creating event node for this game
+  $node = new stdClass();
+  $node->type = 'event_calendar';
+  node_object_prepare($node);
+  $node->title = 'Practice ' . $team->team_name;
+  $node->language = LANGUAGE_NONE;
+  $node->body[$node->language][0]['value'] = '';
+  $node->body[$node->language][0]['summary'] = '';
+  $node->body[$node->language][0]['format'] = 'filtered_html';
+  $node->status = 1;
+  $node->comment = 1;
+  $node->event_calendar_status[$node->language][0]['tid'] = 1;
+  $node->event_calendar_date[$node->language][0]['value'] = date('Y-m-d H:i:s', $practice->p_time);
+  $node->event_calendar_date[$node->language][0]['value2'] = date('Y-m-d H:i:s', $practice->p_time + 3600);
+  if ($node = node_submit($node)) {
+    node_save($node);
+    $practice->event_nid = $node->nid;
+    $cmd = 'INSERT INTO {thsc_practice} (season_id, p_id, team_id, event_nid, p_time) ' .
+        'VALUES (:season_id, :p_id, :team_id, :event_nid, :p_time) ';
+    db_query($cmd, array(
+      ':season_id' => $practice->season_id,
+      ':p_id' => $practice->p_id,
+      ':team_id' => $team->team_id,
+      ':event_nid' => $practice->event_nid,
+      ':p_time' => $practice->p_time
+    ));
+  }
+  else {
+    drupal_set_message('Error creating event for the practice!', 'error');
+  }
+
+  $form_state['redirect'] = 'admin/thsc_game/practice/list/' . $form_state['values']['group_id'];
+}
+
+function thsc_game_practice_edit_form($form, &$form_state, $p_id) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    drupal_set_message("There is no ACTIVE season at this moment!", 'error');
+    return array();
+  }
+
+  $query = db_select('thsc_practice', 'p')->condition('p.season_id', $current_seasonid, '=');
+  $query->condition('p.p_id', $p_id, '=');
+  $query->join('thsc_team', 't', 'p.team_id = t.team_id');
+  $query->fields('p', array(
+    'p_id',
+    'season_id',
+    'team_id',
+    'p_time',
+    'event_nid',
+  ))->fields('t', array(
+    'team_name'
+  ));
+  $result = $query->execute();
+  $practice = $result->fetchObject();
+  $team = thsc_team_load($practice->team_id);
+  $teams = thsc_team_load_multiple(FALSE, array(
+    'group_id' => $team->group_id
+  ));
+  $options = array();
+  foreach ($teams as $team) {
+    $options[$team->team_id] = $team->team_name;
+  }
+
+  $form['practice'] = array(
+    '#type' => 'value',
+    '#value' => $practice
+  );
+
+  $form['p_time'] = array(
+    '#type' => 'date_popup',
+    '#title' => 'Date/Time',
+    '#format' => 'Y-m-d H:i',
+    '#required' => TRUE,
+    '#default_value' => format_date($practice->p_time, 'custom', 'Y-m-d H:i'),
+    '#weight' => -18
+  );
+
+  $form['team_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Team',
+    '#options' => $options,
+    '#default_value' => $practice->team_id,
+    '#weight' => -10
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    '#weight' => 10
+  );
+
+  if (user_access('administer thsc_game')) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => 'Delete',
+      '#submit' => array(
+        'thsc_game_practice_edit_form_delete'
+      ),
+      '#weight' => 20
+    );
+  }
+
+  return $form;
+}
+
+function thsc_game_practice_edit_form_validate($form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    form_set_error('#team_a', 'There is no season marked "ACTIVE" at this moment!');
+  }
+}
+
+function thsc_game_practice_edit_form_submit($form, &$form_state) {
+  $team = thsc_team_load($form_state['values']['team_id']);
+  $practice = $form_state['values']['practice'];
+  $practice->team_id = $team->team_id;
+  $date = new DateObject($form_state['values']['p_time'], NULL, 'Y-m-d H:i');
+  $practice->p_time = $date->getTimestamp();
+  $node = node_load($practice->event_nid);
+  $node->title = 'Practice ' . $team->team_name;
+  $node->event_calendar_date[$node->language][0]['value'] = date('Y-m-d H:i:s', $practice->p_time);
+  $node->event_calendar_date[$node->language][0]['value2'] = date('Y-m-d H:i:s', $practice->p_time + 3600);
+  node_save($node);
+  $cmd = 'UPDATE {thsc_practice} SET team_id = :team_id, p_time = :p_time WHERE season_id = :season_id' . ' AND p_id = :p_id ';
+  db_query($cmd, array(
+    ':team_id' => $practice->team_id,
+    ':p_time' => $practice->p_time,
+    ':season_id' => $practice->season_id,
+    ':p_id' => $practice->p_id,
+  ));
+
+  $form_state['redirect'] = 'admin/thsc_game/practice/list/' . $team->group_id;
+}
+
+function thsc_game_practice_edit_form_delete($form, &$form_state) {
+  $practice = $form_state['values']['practice'];
+  node_delete($practice->event_nid);
+  $cmd = 'DELETE FROM {thsc_practice} WHERE p_id = :p_id';
+  db_query($cmd, array(
+    ':p_id' => $practice->p_id
+  ));
+  $team = thsc_team_load($practice->team_id);
+  $form_state['redirect'] = 'admin/thsc_game/practice/list/' . $team->group_id;
+}
+
+function thsc_game_standing($group_id) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    drupal_set_message('There is no ACTIVE season at this moment!', 'warning');
+    drupal_goto('');
+  }
+  $cmd = 'SELECT g.team_id, t.team_name, SUM(g.points) as PTS, SUM(g.score_gf) as GF, SUM(score_ga) as GA ';
+  $cmd .= ' FROM {thsc_game} g INNER JOIN {thsc_team} t ON g.team_id = t.team_id ';
+  $cmd .= ' WHERE g.season_id = :season_id AND t.group_id = :group_id ';
+  $cmd .= ' GROUP BY g.team_id, t.team_name ';
+  $cmd .= ' ORDER BY PTS DESC, GF ASC, GA DESC ';
+  $result = db_query($cmd, array(
+  	':season_id' => $current_seasonid,
+    ':group_id' => $group_id,
+  ));
+  $wtd_cmd = 'SELECT COUNT(*) AS WTD FROM {thsc_game} WHERE season_id = :season_id AND team_id = :team_id AND wtd_result = :wtd_result';
+  $rows = array();
+  foreach ($result as $rec) {
+    $w_result = db_query($wtd_cmd, array(
+    	':season_id' => $current_seasonid,
+      ':team_id' => $rec->team_id,
+      ':wtd_result' => 'W',
+    ));
+    $W = $w_result->fetchObject()->WTD;
+
+    $l_result = db_query($wtd_cmd, array(
+    	':season_id' => $current_seasonid,
+      ':team_id' => $rec->team_id,
+      ':wtd_result' => 'L',
+    ));
+    $L = $l_result->fetchObject()->WTD;
+
+    $d_result = db_query($wtd_cmd, array(
+    	':season_id' => $current_seasonid,
+      ':team_id' => $rec->team_id,
+      ':wtd_result' => 'D',
+    ));
+    $D = $d_result->fetchObject()->WTD;
+
+    $row_data = array(
+    	'team_name' => l($rec->team_name, 'thsc_team/' . $rec->team_id),
+      'PTS' => $rec->PTS,
+      'W' => $W,
+      'L' => $L,
+      'D' => $D,
+      'GF' => $rec->GF,
+      'GA' => $rec->GA,
+    );
+
+    $rows[] = array('data' => $row_data);
+  }
+
+  $content = array();
+  $content['entity_table'] = array(
+    '#theme' => 'table',
+    '#rows' => $rows,
+    '#header' => array(
+      'Team',
+      'Points',
+      'Win',
+      'Lose',
+      'Draw',
+      'GF',
+      'GA',
+    ),
+    '#weight' => 0,
+  );
+
+  return $content;
+}
+
+function thsc_game_teamschedule_title($team_id) {
+  $team = thsc_team_load($team_id);
+  if (!empty($team)) {
+    return $team->team_name . ' Schedule';
+  }
+  else {
+    return 'Team Not Found!';
+  }
+}
+
+function thsc_game_teamschedule($team_id, $live) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    drupal_set_message('There is no ACTIVE season at this moment!', 'warning');
+    drupal_goto('');
+  }
+  $schedule_recs = array();
+
+  $cmd = 'SELECT g.game_id, g.game_time, g.event_nid, t.team_name FROM {thsc_game} g ';
+  $cmd .= ' INNER JOIN {thsc_game} g2 ON g.game_id = g2.game_id AND g.row_id <> g2.row_id ';
+  $cmd .= ' INNER JOIN {thsc_team} t ON g2.team_id = t.team_id ';
+  $cmd .= ' WHERE g.season_id = :season_id AND g.team_id = :team_id ';
+  $params = array(
+  	':season_id' => $current_seasonid,
+    ':team_id' => $team_id,
+  );
+  if ($live) {
+    $cmd .= ' AND g.game_time >= :time ';
+    $params[':time'] = time();
+  }
+  $result = db_query($cmd, $params);
+
+  foreach ($result as $rec) {
+    $schedule_recs[$rec->game_time] = array(
+    	'id' => $rec->game_id,
+      'time' => $rec->game_time,
+      'event_nid' => $rec->event_nid,
+      'team_b' => $rec->team_name,
+      'type' => 'GAME',
+    );
+  }
+
+  $cmd = ' SELECT p.p_id, p.p_time, p.event_nid FROM {thsc_practice} p WHERE p.season_id = :season_id AND p.team_id = :team_id ';
+  if ($live) {
+    $cmd .= ' AND p.p_time >= :time ';
+  }
+  $result = db_query($cmd, $params);
+  foreach ($result as $rec) {
+    $schedule_recs[$rec->p_time] = array(
+    	'id' => $rec->p_id,
+      'time' => $rec->p_time,
+      'event_nid' => $rec->event_nid,
+      'team_b' => '--',
+      'type' => 'PRACTICE',
+    );
+  }
+
+  ksort($schedule_recs);
+  $rows = array();
+  foreach ($schedule_recs as $k => $rec) {
+    $row_data = array(
+      'type' => $rec['type'],
+      'time' => l(format_date($rec['time']), 'node/' . $rec['event_nid']),
+    	'team_name' => $rec['team_b'],
+    );
+
+    $rows[] = array('data' => $row_data);
+  }
+
+  $content = array();
+  $content['schedule_table'] = array(
+    '#theme' => 'table',
+    '#rows' => $rows,
+    '#header' => array(
+      'Type',
+      'Date/Time',
+      'VS',
+    ),
+    '#weight' => 0,
+  );
+
+  return $content;
+}
+
+function thsc_game_aplayerschedule_title($apid) {
+  $activeplayer = thsc_activeplayer_load($apid);
+  if (!empty($activeplayer)) {
+    return thsc_game_teamschedule_title($activeplayer->team_id);
+  }
+  else {
+    return '';
+  }
+}
+
+function thsc_game_aplayerschedule($apid, $live) {
+  $activeplayer = thsc_activeplayer_load($apid);
+  if ($live == 'live') {
+    $param = TRUE;
+  }
+  else {
+    $param = FALSE;
+  }
+  if (!empty($activeplayer)) {
+    return thsc_game_teamschedule($activeplayer->team_id, $param);
+  }
+  else {
+    return 'Player Code could not be found!';
+  }
+}

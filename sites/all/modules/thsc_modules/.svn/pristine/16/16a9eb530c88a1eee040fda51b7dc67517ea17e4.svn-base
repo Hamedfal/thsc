@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+
+.schedule-practice-row {
+	font-style: italic;
+}
+
+.schedule-type-cell {
+	font-size: x-small;
+}
+
+.schedule-nexttime-cell {
+	background-color: #DFE593;
+}
+
+#mychildren-payment-section {
+	margin-top: 20px;
+	float: left;
+}

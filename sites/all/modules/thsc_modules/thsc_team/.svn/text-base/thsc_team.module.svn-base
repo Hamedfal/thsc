@@ -1,0 +1,583 @@
+<?php
+
+/**
+ * @file
+ * THSC Team Entity module
+ */
+
+/**
+ * @defgroup thsc_team
+ */
+function thsc_team_entity_info() {
+  $info['thsc_team'] = array(
+    'label' => t('THSC Team'),
+    'controller class' => 'ThscTeamController',
+    'base table' => 'thsc_team',
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'thsc_team_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'team_id',
+      'bundle' => 'bundle_type'
+    ),
+    'bundle keys' => array(
+      'bundle' => 'bundle_type'
+    ),
+    'static cache' => FALSE,
+    'bundles' => array(
+      'thsc_team' => array(
+        'label' => 'Team Info',
+        'admin' => array(
+          'path' => 'admin/structure/thsc_team/manage',
+          'access arguments' => array(
+            'administer thsc_team'
+          )
+        )
+      )
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('THSC Team Information'),
+        'custom settings' => FALSE
+      )
+    )
+  );
+
+  return $info;
+}
+
+function thsc_team_permission() {
+  return array(
+    'administer thsc_team' => array(
+      'title' => t('Administer Teams')
+    )
+  );
+}
+
+function thsc_team_uri($team) {
+  return array(
+    'path' => 'thsc_team/' . $team->team_id
+  );
+}
+
+function thsc_team_load($team_id = NULL, $reset = FALSE) {
+  $team_ids = (isset($team_id) ? array(
+    $team_id
+  ) : FALSE);
+  $team = thsc_team_load_multiple($team_ids, $reset);
+  return $team ? reset($team) : FALSE;
+}
+
+function thsc_team_load_multiple($team_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('thsc_team', $team_ids, $conditions, $reset);
+}
+
+function thsc_team_menu() {
+  $items['thsc_team'] = array(
+    'title' => 'THSC Teams',
+    'page callback' => 'thsc_team_info',
+    'access arguments' => array(
+      'administer thsc_team'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['admin/structure/thsc_team/manage'] = array(
+    'title' => 'THSC Teams',
+    'description' => 'Manage THSC Teams Structure',
+    'page callback' => 'thsc_team_list_teams',
+    'access arguments' => array(
+      'administer thsc_team'
+    )
+  );
+
+  $items['admin/structure/thsc_team/manage/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_team/%thsc_team'] = array(
+    'title' => 'THSC Team',
+    'page callback' => 'thsc_team_view',
+    'page arguments' => array(
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_team'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_team/%thsc_team/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_team/%thsc_team/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_team_form',
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_team'
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  $items['thsc_team/add'] = array(
+    'title' => 'Add THSC Team',
+    'page callback' => 'thsc_team_add',
+    'access arguments' => array(
+      'administer thsc_team'
+    )
+  );
+
+  $items['thsc_team/%thsc_team/manage/players'] = array(
+    'title callback' => 'thsc_team_manage_players_title',
+    'title arguments' => array(
+      1
+    ),
+    'page callback' => 'thsc_team_manage_players',
+    'page arguments' => array(
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_team'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_team/%thsc_team/manage/removeapid/%thsc_activeplayer'] = array(
+    'title' => 'Confirm Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_team_removeapid_confirm_form',
+      1,
+      4
+    ),
+    'access arguments' => array(
+      'administer thsc_team'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_team/%thsc_team/manage/addplayer'] = array(
+    'title' => 'Add Player To Team',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_team_addplayer_form',
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_team'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+function thsc_team_info() {
+  return ('Welcome to the administration page for THSC Teams!');
+}
+
+function thsc_team_list_teams() {
+  // use datatables module if enabled
+  $use_datatables = module_exists('datatables');
+  $teams = thsc_team_load_multiple();
+  if (!empty($teams)) {
+    foreach ($teams as $team) {
+      $group = thsc_group_load($team->group_id);
+      $row_data = array(
+    	  'team_name' => l($team->team_name, 'thsc_team/' . $team->team_id),
+        'group_name' => l($group->group_name, 'thsc_group/' . $group->group_id),
+      );
+      if ($use_datatables) {
+        $rows[] = $row_data;
+      }
+      else {
+        $rows[] = array(
+          'data' => $row_data,
+        );
+      }
+    }
+
+    if ($use_datatables) {
+      $header = array(
+        array(
+          'data' => 'Team Name',
+          'datatable_options' => array(
+            'bSortable' => TRUE,
+            'bSearchable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Group',
+          'datatable_options' => array(
+          	'bSortable' => TRUE,
+            'bSearchable' => TRUE,
+          ),
+        ),
+      );
+
+      $attributes['datatable_options'] = array(
+        'bFilter' => TRUE,
+        'bInfo' => TRUE,
+        'bSort' => TRUE,
+        'bJQueryUI' => TRUE,
+      );
+
+      $content['entity_datatable'] = array(
+        '#theme' => 'datatable',
+        '#header' => $header,
+        '#rows' => $rows,
+        '#attributes' => $attributes
+      );
+    }
+    else {
+      $content['entity_table'] = array(
+        '#theme' => 'table',
+        '#rows' => $rows,
+        '#header' => array(
+          'Team Name',
+          'Group',
+        )
+      );
+    }
+  }
+  else {
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No THSC Team currently exist!')
+    );
+  }
+
+  return $content;
+}
+
+function thsc_team_view($team, $view_mode = 'full') {
+  $entity_type = 'thsc_team';
+  $team->content = array();
+
+  field_attach_prepare_view($entity_type, array(
+    $team->team_id => $team
+  ), $view_mode);
+  entity_prepare_view($entity_type, array(
+    $team->team_id => $team
+  ));
+  $team->content += field_attach_view($entity_type, $team, $view_mode);
+
+  $team->content['team_name'] = array(
+    '#type' => 'item',
+    '#title' => t('Team Name'),
+    '#markup' => $team->team_name,
+    '#weight' => -10
+  );
+  if ($team->group_id) {
+    $group = thsc_group_load($team->group_id);
+    $team->content['group_name'] = array(
+    	'#type' => 'item',
+      '#title'=> 'Group',
+      '#markup' => $group->group_name,
+      '#weight' => -8,
+    );
+  }
+
+  $team->content['manage_players'] = array(
+    '#theme' => 'thsc_link',
+    '#value' => l('Manage Players', 'thsc_team/' . $team->team_id . '/manage/players', array(
+      'attributes' => array(
+        'class' => 'active'
+      )
+    )),
+  );
+
+  if (module_exists('thsc_game')) {
+    $team->content['team_schedule'] = array(
+      '#theme' => 'thsc_link',
+      '#value' => l('Team Schedule', 'thsc_game/team/schedule/' . $team->team_id . '/full', array(
+        'attributes' => array(
+          'class' => 'active'
+        )
+      )),
+    );
+  }
+
+  global $language;
+  $langcode = $language->language;
+  module_invoke_all('entity_view', $team, $entity_type, $view_mode, $langcode);
+  drupal_alter(array(
+    'thsc_team_view',
+    'entity_view'
+  ), $team->content, $entity_type);
+
+  return $team->content;
+}
+
+function thsc_team_field_extra_fields() {
+  $return = array();
+  $return['thsc_team']['thsc_team'] = array(
+    'form' => array(
+      'team_name' => array(
+        'label' => 'Team Name',
+        'weight' => -10
+      )
+    )
+  );
+
+  return $return;
+}
+
+function thsc_team_form($form, &$form_state, $team) {
+  $form['team_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Team Name',
+    '#required' => TRUE,
+    '#default_value' => $team->team_name,
+    '#weight' => -8
+  );
+
+  $result = db_query('SELECT group_id, group_name FROM {thsc_group} ');
+  $group_options = array();
+  foreach ($result as $rec) {
+    $group_options[$rec->group_id] = $rec->group_name;
+  }
+
+  $form['group_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Group',
+    '#requried' => TRUE,
+    '#options' => $group_options,
+    '#default_value' => $team->group_id,
+    '#empty_value' => 0,
+    '#empty_option' => 'Please select a group',
+    '#weight' => -10
+  );
+
+  $form['team'] = array(
+    '#type' => 'value',
+    '#value' => $team
+  );
+
+  field_attach_form('thsc_team', $team, $form, $form_state);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100
+  );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+    '#submit' => array(
+      'thsc_team_form_delete'
+    ),
+    '#weight' => 120
+  );
+
+  return $form;
+}
+
+function thsc_team_form_validate($form, &$form_state) {
+  field_attach_form_validate('thsc_team', $form_state['values']['team'], $form, $form_state);
+  // @todo if this is for delete action, we need to check and make sure this group has no team or player as member!
+  if ($form_state['values']['group_id'] == 0) {
+    form_set_error('#group_id', 'You need to select a group for this team.');
+  }
+}
+
+function thsc_team_form_submit($form, &$form_state) {
+  $team = $form_state['values']['team'];
+  $team->team_name = $form_state['values']['team_name'];
+  $team->group_id = $form_state['values']['group_id'];
+  field_attach_submit('thsc_team', $team, $form, $form_state);
+  $team = entity_get_controller('thsc_team')->save($team);
+  $form_state['redirect'] = "thsc_team/$team->team_id";
+}
+
+function thsc_team_form_delete($form, &$form_state) {
+  $team = $form_state['values']['team'];
+  entity_get_controller('thsc_team')->delete($team);
+  drupal_set_message(t('The Team %team_name (ID %id) has been deleted', array(
+    '%team_name' => $team->team_name,
+    '%id' => $team->team_id
+  )));
+  $form_state['redirect'] = '';
+}
+
+function thsc_team_removeapid_confirm_form($form, &$form_state, $team, $activeplayer) {
+  $form['confirm_message'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Are you sure you want to remove this player from team ' . $team->team_name . '?'
+  );
+
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => 'Delete',
+    '#weight' => 100
+  );
+
+  $form['team_id'] = array(
+    '#type' => 'value',
+    '#value' => $team->team_id
+  );
+  $form['activeplayer'] = array(
+    '#type' => 'value',
+    '#value' => $activeplayer
+  );
+
+  return $form;
+}
+
+function thsc_team_removeapid_confirm_form_submit($form, &$form_state) {
+  $team_id = $form_state['values']['team_id'];
+  $activeplayer = $form_state['values']['activeplayer'];
+  $query = db_update('thsc_activeplayer');
+  $query->fields(array(
+    'team_id' => 0
+  ))->condition('apid', $activeplayer->apid)->execute();
+
+  drupal_set_message('Player was successfully removed from this team.');
+  $form_state['redirect'] = 'thsc_team/' . $team_id . '/manage/players';
+}
+
+function thsc_team_addplayer_form($form, &$form_state, $team) {
+  $form['team_name'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Add Player to Team: ' . $team->team_name,
+    '#weight' => -20
+  );
+
+  $form['apid'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Registered Player',
+    '#size' => 64,
+    '#autocomplete_path' => 'thsc_activeplayer/autocomplete/group/' . $team->group_id,
+    '#default_value' => '',
+    '#weight' => -10
+  );
+
+  $form['team'] = array(
+    '#type' => 'value',
+    '#value' => $team
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit'
+  );
+
+  return $form;
+}
+
+function thsc_team_addplayer_form_submit($form, &$form_state) {
+  $apid = $form_state['values']['apid'];
+  $team = $form_state['values']['team'];
+  if ($apid) {
+    db_query('UPDATE {thsc_activeplayer} SET team_id = :team_id WHERE apid = :apid', array(
+      ':team_id' => $team->team_id,
+      ':apid' => $apid
+    ));
+    drupal_set_message('Player was added to the team.');
+  }
+  $form_state['redirect'] = 'thsc_team/' . $team->team_id . '/manage/players';
+}
+
+function thsc_team_add() {
+  $team = entity_get_controller('thsc_team')->create();
+  return drupal_get_form('thsc_team_form', $team);
+}
+
+function thsc_team_manage_players_title($team) {
+  return $team->team_name . ' Players';
+}
+
+function thsc_team_manage_players($team) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $use_datatables = module_exists('datatables');
+  $team->content = array();
+  $query = db_select('thsc_activeplayer', 'ap');
+  $query->condition('ap.bundle_type', 'thsc_activeplayer', '=');
+  $query->condition('ap.team_id', $team->team_id, '=');
+  $query->condition('ap.season_id', $current_seasonid, '=');
+  $query->join('thsc_player', 'p', 'ap.player_id = p.player_id');
+  $query->fields('p', array(
+    'first_name',
+    'last_name',
+  ));
+  $query->fields('ap', array(
+    'apid',
+    'player_id'
+  ));
+  $players = $query->execute();
+  $rows = array();
+  foreach ($players as $player) {
+    $row_data = array(
+      'data' => array(
+        'player_name' => l($player->first_name . ' ' . $player->last_name, 'thsc_player/' . $player->player_id),
+        'remove_link' => l('Remove From Team', 'thsc_team/' . $team->team_id . '/manage/removeapid/' . $player->apid)
+      )
+    );
+    if ($use_datatables) {
+      $rows[] = $row_data;
+    }
+    else {
+      $rows[] = array(
+        'data' => $row_data
+      );
+    }
+  }
+  $team->content['add_link'] = array(
+    '#type' => 'markup',
+    '#markup' => l('Add Player to This Team', 'thsc_team/' . $team->team_id . '/manage/addplayer')
+  );
+  if ($use_datatables) {
+    $header = array(
+      array(
+        'data' => 'Player Name',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Actions',
+        'datatable_options' => array(
+          'bSortable' => FALSE
+        )
+      ),
+    );
+
+    $attributes['datatable_options'] = array(
+      'bFilter' => TRUE,
+      'bInfo' => TRUE,
+      'bSort' => TRUE,
+      'bJQueryUI' => TRUE,
+    );
+
+    $team->content['entity_datatable'] = array(
+      '#theme' => 'datatable',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#attributes' => $attributes,
+      'bJQueryUI' => TRUE,
+    );
+  }
+  else {
+    $team->content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(
+        array(
+          'data' => 'Player Name',
+          'sort' => 'asc',
+        ),
+        'Actions',
+      )
+    );
+  }
+  return $team->content;
+}
+

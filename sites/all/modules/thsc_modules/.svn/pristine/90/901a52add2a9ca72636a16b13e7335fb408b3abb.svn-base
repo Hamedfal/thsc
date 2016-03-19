@@ -1,0 +1,90 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_activeplayer
+ */
+function thsc_activeplayer_schema() {
+  $schema = array();
+
+  $schema['thsc_activeplayer'] = array(
+    'description' => 'The database table to keep each player information in every season.',
+    'fields' => array(
+      'apid' => array(
+        'description' => 'Primary key of the active player entity.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'bundle_type' => array(
+        'description' => 'THSC Active Player Bundle Type',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => 'thsc_activeplayer',
+      ),        
+      'player_id' => array(
+        'description' => 'Map to thsc_player entity',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'team_id' => array(
+        'description' => 'Map to thsc_teams entity',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'group_id' => array(
+        'description' => 'Map to thsc_group entity',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'registered_at' => array(
+        'description' => 'Timestamp of registration',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'payment_made' => array(
+        'description' => 'A flag to show if the payment has been made for this season',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'season_id' => array(
+        'description' => 'Map to season entity',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('apid'),
+    'indexes' => array(
+      'team_ids' => array('team_id'),
+      'group_ids' => array('group_id'),
+      'season_ids' => array('season_id'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * At uninstall time we'll notify field.module that the entity was deleted
+ * so that attached fields can be cleaned up.
+ *
+ * @ingroup entity_example
+ */
+function thsc_activeplayer_uninstall() {
+  field_attach_delete_bundle('thsc_activeplayer', 'thsc_activeplayer');
+}
+

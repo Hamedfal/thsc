@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_team
+ */
+function thsc_team_schema() {
+  $schema = array();
+
+  $schema['thsc_team'] = array(
+    'description' => 'The database table for THSC teams',
+    'fields' => array(
+      'team_id' => array(
+        'description' => 'Primary key.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'bundle_type' => array(
+        'description' => 'THSC Team Bundle Type',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => 'thsc_team',
+      ),
+      'team_name' => array(
+        'description' => 'Name of this team',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'group_id' => array(
+        'description' => 'The thsc_groups relationship',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('team_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * At uninstall time we'll notify field.module that the entity was deleted
+ * so that attached fields can be cleaned up.
+ *
+ * @ingroup entity_example
+ */
+function thsc_team_uninstall() {
+  field_attach_delete_bundle('thsc_team', 'thsc_team');
+}
+

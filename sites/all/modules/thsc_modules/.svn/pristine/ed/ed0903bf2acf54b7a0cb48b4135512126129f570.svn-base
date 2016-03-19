@@ -1,0 +1,81 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_player
+ */
+function thsc_player_schema() {
+  $schema = array();
+
+  $schema['thsc_player'] = array(
+    'description' => 'The basic information for thsc_player entity.',
+    'fields' => array(
+      'player_id' => array(
+        'description' => 'Primary key of the player entity.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'bundle_type' => array(
+        'description' => 'THSC Player Bundle Type',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => 'thsc_player',
+      ),        
+      'first_name' => array(
+        'description' => 'Player first name',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'last_name' => array(
+        'description' => 'Player last name',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'gender' => array(
+        'description' => 'Gender',
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => 'M',
+      ),
+      'birthdate' => array(
+        'description' => 'Date of Birth',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),	
+      'created' => array(
+        'description' => 'The Unix timestamp of the entity creation time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('player_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * At uninstall time we'll notify field.module that the entity was deleted
+ * so that attached fields can be cleaned up.
+ *
+ * @ingroup entity_example
+ */
+function thsc_player_uninstall() {
+  field_attach_delete_bundle('thsc_player', 'thsc_player');
+}
+

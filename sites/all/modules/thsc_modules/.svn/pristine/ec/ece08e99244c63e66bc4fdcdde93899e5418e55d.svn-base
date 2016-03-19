@@ -1,0 +1,522 @@
+<?php
+
+/**
+ * @file
+ * Implements the basic functionality required to create and display a player in THSC.
+ */
+
+/**
+ * @defgroup thsc_activeplayer
+ */
+function thsc_activeplayer_entity_info() {
+  $info['thsc_activeplayer'] = array(
+    'label' => t('Player Seasonal Information'),
+    'controller class' => 'ThscActivePlayerController',
+    'base table' => 'thsc_activeplayer',
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'thsc_activeplayer_uri',
+    'fieldable' => FALSE,
+    'entity keys' => array(
+      'id' => 'apid',
+      'bundle' => 'bundle_type'
+    ),
+    'bundle keys' => array(
+      'bundle' => 'bundle_type'
+    ),
+    'static cache' => FALSE,
+    'bundles' => array(
+      'thsc_activeplayer' => array(
+        'label' => 'Player Seasonal Info',
+        'admin' => array(
+          'path' => 'admin/structure/thsc_activeplayer/manage',
+          'access arguments' => array(
+            'administer thsc_player'
+          ) // uses same permissions as thsc_player module
+                )
+      )
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('THSC Seasonal Players'),
+        'custom settings' => FALSE
+      )
+    )
+  );
+
+  return $info;
+}
+
+function thsc_activeplayer_uri($player) {
+  return array(
+    'path' => 'thsc_activeplayer/' . $player->apid
+  );
+}
+
+function thsc_activeplayer_load($apid = NULL, $reset = FALSE) {
+  $apids = (isset($apid) ? array(
+    $apid
+  ) : FALSE);
+  $player = thsc_activeplayer_load_multiple($apids, $reset);
+  return $player ? reset($player) : FALSE;
+}
+
+function thsc_activeplayer_load_multiple($apids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('thsc_activeplayer', $apids, $conditions, $reset);
+}
+
+function thsc_activeplayer_menu() {
+  $item['thsc_activeplayer'] = array(
+    'title' => 'THSC Players',
+    'page callback' => 'thsc_activeplayer_info',
+    'access arguments' => array(
+      'administer thsc_player'
+    )
+  );
+
+  $items['admin/structure/thsc_activeplayer/manage'] = array(
+    'title' => 'THSC Seasonal Players',
+    'description' => 'Players who have registered for current season',
+    'page callback' => 'thsc_activeplayer_list_players',
+    'access arguments' => array(
+      'administer thsc_player'
+    )
+  );
+
+  $items['admin/structure/thsc_activeplayer/manage/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_activeplayer/%thsc_activeplayer'] = array(
+    'title' => 'THSC Seasonal Player',
+    'page callback' => 'thsc_activeplayer_view',
+    'page arguments' => array(
+      1
+    ),
+    'access callback' => 'thsc_activeplayer_access',
+    'access arguments' => array(
+      1
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_activeplayer/%thsc_activeplayer/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_activeplayer/%thsc_activeplayer/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_activeplayer_form',
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_player'
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  $items['thsc_activeplayer/%thsc_activeplayer/group/autoassign'] = array(
+    'title' => 'Automatically Find a Group',
+    'page callback' => 'thsc_activeplayer_autoassign_group',
+    'page arguments' => array(
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_player'
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  $items['thsc_activeplayer/autocomplete/all'] = array(
+    'title' => 'Auto Complete for Active Players in Groups',
+    'page callback' => 'thsc_activeplayer_autocomplete_all',
+    'access arguments' => array(
+      'administer thsc_player'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_activeplayer/autocomplete/group/%'] = array(
+    'title' => 'Auto Complete for Active Players in a Group',
+    'page callback' => 'thsc_activeplayer_autocomplete_group',
+    'page arguments' => array(
+  	  3,
+    ),
+    'access arguments' => array(
+      'administer thsc_player'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+function thsc_activeplayer_access($activeplayer) {
+  if (is_object($activeplayer) && !empty($activeplayer->player_id)) {
+    return thsc_player_access('view', $activeplayer->player_id);
+  }
+  return (user_access('administer thsc_player'));
+}
+
+function thsc_activeplayer_info() {
+  return ('Welcome to the administration page for THSC Players!');
+}
+
+function thsc_activeplayer_list_players() {
+  $content = array();
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    return "There is no ACTIVE season at this moment!";
+  }
+  // use datatables module if enabled
+  $use_datatables = module_exists('datatables');
+  $season_condition = array(
+    'season_id' => $current_seasonid
+  );
+  $players = thsc_activeplayer_load_multiple(FALSE, $season_condition);
+  if (!empty($players)) {
+    foreach ($players as $player) {
+      // get player's basic information:
+      $basicinfo = thsc_player_load($player->player_id);
+      $parent_object = entity_metadata_wrapper('thsc_player', $basicinfo);
+      if (is_object($parent_object)) {
+        $parent_uid = $parent_object->field_parent->value()->uid;
+      }
+      else {
+        $parent_uid = 0;
+      }
+      if ($player->group_id) {
+        $group = thsc_group_load($player->group_id);
+        $group_name = $group->group_name;
+      }
+      else {
+        $group_name = '(no group)';
+      }
+      $row_data = array(
+        'player_name' => l($basicinfo->first_name . ' ' . $basicinfo->last_name, 'thsc_player/' . $player->player_id),
+        'age' => thsc_player_calculate_age($basicinfo->birthdate),
+        'gender' => $basicinfo->gender == 'M' ? 'Boy' : 'Girl',
+        'registered_at' => l(format_date($player->registered_at), 'thsc_activeplayer/' . $player->apid),
+        'parent' => l($player->payment_made ? 'PAID' : 'not paid', 'user/' . $parent_uid),
+        'group' => $group_name
+      );
+      if ($use_datatables) {
+        $rows[] = $row_data;
+      }
+      else {
+        $rows[] = array(
+          'data' => $row_data
+        );
+      }
+    }
+    if ($use_datatables) {
+      $header = array(
+        array(
+          'data' => 'Player Name',
+          'datatable_options' => array(
+            'bSortable' => TRUE,
+            'bSearchable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Age',
+          'datatable_options' => array(
+            'bSortable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Gender',
+          'datatable_options' => array(
+            'bSortable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Registered At',
+          'datatable_options' => array(
+            'bSortable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Parent Link',
+          'datatable_options' => array(
+            'bSortable' => FALSE
+          )
+        ),
+        array(
+          'data' => l('Auto Assign?', 'thsc_group/autoassign'),
+          'datatable_options' => array(
+            'bSortable' => FALSE
+          )
+        )
+      );
+
+      $attributes['datatable_options'] = array(
+        'bFilter' => TRUE,
+        // 'bInfo' => TRUE,
+        'bSort' => TRUE
+      );
+
+      $content['entity_datatable'] = array(
+        '#theme' => 'datatable',
+        '#header' => $header,
+        '#rows' => $rows,
+        '#attributes' => $attributes
+      );
+    }
+    else {
+      $content['entity_table'] = array(
+        '#theme' => 'table',
+        '#rows' => $rows,
+        '#header' => array(
+          'Player Name',
+          'Age',
+          'Gender',
+          'Registered At',
+          'Parent Link',
+          l('Auto Assign?', 'thsc_group/autoassign')
+        )
+      );
+    }
+  }
+  else {
+    // There were no entities. Tell the user.
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No THSC Seasonal Player Info currently exist!')
+    );
+  }
+
+  return $content;
+}
+
+function thsc_activeplayer_view($player, $view_mode = 'full') {
+  $entity_type = 'thsc_activeplayer';
+  $player->content = array();
+
+  field_attach_prepare_view($entity_type, array(
+    $player->player_id => $player
+  ), $view_mode);
+  entity_prepare_view($entity_type, array(
+    $player->player_id => $player
+  ));
+  $player->content += field_attach_view($entity_type, $player, $view_mode);
+
+  $player->content['apid'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Player ID = ' . $player->apid . '<br />',
+    '#weight' => -22
+  );
+  $player->content['player_id'] = array(
+    '#type' => 'markup',
+    '#markup' => l('Member ID = ' . $player->player_id, 'thsc_player/' . $player->player_id) . '<br />',
+    '#weight' => -20
+  );
+  $player->content['season_id'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Season ID = ' . $player->season_id . '<br />',
+    '#weight' => -18
+  );
+  $player->content['team_id'] = array(
+    '#type' => 'item',
+    '#title' => t('Team ID'),
+    '#markup' => $player->team_id,
+    '#weight' => -10
+  );
+  $player->content['group_id'] = array(
+    '#type' => 'item',
+    '#title' => t('Group ID'),
+    '#markup' => $player->group_id ? $player->group_id : l('Auto Assign', 'thsc_activeplayer/' . $player->apid . '/group/autoassign'),
+    '#weight' => -8
+  );
+  $player->content['registered_at'] = array(
+    '#type' => 'item',
+    '#title' => t('Registered At'),
+    '#markup' => format_date($player->registered_at),
+    '#weight' => -4
+  );
+  $player->content['payment_made'] = array(
+    '#type' => 'item',
+    '#title' => t('Payment Made?'),
+    '#markup' => ($player->payment_made ? 'YES' : 'NO'),
+    '#weight' => -2
+  );
+  global $language;
+  $langcode = $language->language;
+  module_invoke_all('entity_view', $player, $entity_type, $view_mode, $langcode);
+  drupal_alter(array(
+    'thsc_activeplayer_view',
+    'entity_view'
+  ), $player->content, $entity_type);
+
+  return $player->content;
+}
+
+function thsc_activeplayer_field_extra_fields() {
+  $return = array();
+  $return['thsc_activeplayer']['thsc_activeplayer'] = array(
+    'form' => array(
+      'player_id' => array(
+        'label' => 'Player ID',
+        'weight' => -10
+      ),
+      'season_id' => array(
+        'label' => 'Season ID',
+        'weight' => -5
+      )
+    )
+  );
+
+  return $return;
+}
+
+function thsc_activeplayer_form($form, &$form_state, $player) {
+  $form['payment_made'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Payment Made?',
+    '#required' => FALSE,
+    '#default_value' => $player->payment_made
+  );
+  $form['player'] = array(
+    '#type' => 'value',
+    '#value' => $player
+  );
+
+  field_attach_form('thsc_activeplayer', $player, $form, $form_state);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100
+  );
+  if (!empty($player->apid) && user_access('administer thsc_activeplayer')) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#submit' => array(
+        'thsc_activeplayer_form_delete'
+      ),
+      '#weight' => 120
+    );
+  }
+
+  return $form;
+}
+
+function thsc_activeplayer_form_validate($form, &$form_state) {
+  field_attach_form_validate('thsc_activeplayer', $form_state['values']['player'], $form, $form_state);
+}
+
+function thsc_activeplayer_form_submit($form, &$form_state) {
+  $player = $form_state['values']['player'];
+  $player->payment_made = $form_state['values']['payment_made'];
+  field_attach_submit('thsc_activeplayer', $player, $form, $form_state);
+  $player = thsc_activeplayer_save($player);
+  $form_state['redirect'] = "thsc_activeplayer/$player->apid";
+}
+
+function thsc_activeplayer_save(&$player) {
+  return entity_get_controller('thsc_activeplayer')->save($player);
+}
+
+function thsc_activeplayer_form_delete($form, &$form_state) {
+  $player = $form_state['values']['player'];
+  entity_get_controller('thsc_activeplayer')->delete($player);
+  drupal_set_message(t('The Seasonal Player (ID %id) has been deleted', array(
+    '%id' => $player->apid
+  )));
+  $form_state['redirect'] = '';
+}
+
+function thsc_activeplayer_autoassign_group($activeplayer) {
+  if ($activeplayer->group_id) {
+    drupal_set_message('This player is already assigned to a group!');
+  }
+  else {
+    $groups = thsc_group_load_multiple();
+    $player = thsc_player_load($activeplayer->player_id);
+    $age = thsc_player_calculate_age($player->birthdate);
+    // search for appropriate group:
+    foreach ($groups as $group) {
+      if (($group->start_age <= $age) && ($age <= $group->end_age) && thsc_group_match_gender2group($group->gender_type, $player->gender)) {
+        db_query('UPDATE {thsc_activeplayer} SET group_id = :group_id WHERE apid = :apid', array(
+          ':group_id' => $group->group_id,
+          ':apid' => $activeplayer->apid
+        ));
+        $activeplayer->group_id = $group->group_id;
+        drupal_set_message('Player was assigned to ' . $group->group_name);
+      }
+    }
+    // if the group_id is still zero, it means that we have not found an appropriate group
+    if ($activeplayer->group_id == 0) {
+      drupal_set_message('No group could be matched to this player.', 'warning');
+    }
+  }
+  drupal_goto('thsc_activeplayer/' . $activeplayer->apid);
+}
+
+function thsc_activeplayer_autocomplete_all($string) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $rows = array();
+  if ($current_seasonid) {
+    $query = db_select('thsc_activeplayer', 'ap');
+    $query->join('thsc_player', 'p', 'p.player_id = ap.player_id');
+    $query->leftJoin('thsc_group', 'g', 'ap.group_id = g.group_id');
+    $query->condition('ap.season_id', $current_seasonid, '=');
+    $query->condition(db_or()
+         ->condition('p.first_name', '%' . db_like($string) . '%', 'LIKE')
+         ->condition('p.last_name', '%' . db_like($string) . '%', 'LIKE'));
+    $query->fields('ap', array('apid'))
+      ->fields('p', array('first_name', 'last_name'))
+      ->fields('g', array('group_name'));
+
+    $result = $query->execute();
+    foreach ($result as $rec) {
+      $rows[$rec->apid] = $rec->first_name . ' ' . $rec->last_name;
+      if ($rec->group_name) {
+        $rows[$rec->apid] .= ', "' . $rec->group_name . '"';
+      }
+      else {
+        $rows[$rec->apid] .= ', (no group)';
+      }
+    }
+  }
+  drupal_json_output($rows);
+}
+
+function thsc_activeplayer_autocomplete_group($group_id, $string) {
+  $group = thsc_group_load($group_id);
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $rows = array();
+  if ((!empty($group)) && ($current_seasonid)){
+    $query = db_select('thsc_activeplayer', 'ap');
+    $query->join('thsc_player', 'p', 'p.player_id = ap.player_id');
+    $query->leftJoin('thsc_team', 't', 'ap.team_id = t.team_id');
+    $query->condition('ap.season_id', $current_seasonid, '=');
+    $query->condition('ap.group_id', $group_id, '=');
+    $query->condition(db_or()
+         ->condition('p.first_name', '%' . db_like($string) . '%', 'LIKE')
+         ->condition('p.last_name', '%' . db_like($string) . '%', 'LIKE'));
+    $query->fields('ap', array('apid'))
+      ->fields('p', array('first_name', 'last_name'))
+      ->fields('t', array('team_name'));
+
+    $result = $query->execute();
+    foreach ($result as $rec) {
+      $rows[$rec->apid] = $rec->first_name . ' ' . $rec->last_name;
+      if ($rec->team_name) {
+        $rows[$rec->apid] .= ', "' . $rec->team_name . '"';
+      }
+      else {
+        $rows[$rec->apid] .= ', (no team)';
+      }
+    }
+  }
+  drupal_json_output($rows);
+}
+
+/**
+ * @} End of "defgroup thsc_activeplayer".
+ */

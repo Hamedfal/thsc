@@ -1,0 +1,273 @@
+<?php
+
+/**
+ * @file
+ * THSC Practice module
+ */
+function thsc_practice_node_info() {
+  return array(
+    'thsc_practice' => array(
+      'name' => 'Practice',
+      'base' => 'thsc_practice',
+      'description' => 'Practice Content Type for THSC',
+      'has_title' => TRUE,
+      'title_label' => 'Practice',
+      'locked' => TRUE
+    )
+  );
+}
+
+function thsc_practice_form($node, $form_state) {
+  $form = node_content_form($node, $form_state);
+
+  $form['title']['#required'] = FALSE;
+  if (empty($form['title']['#default_value'])) {
+    $form['title']['#default_value'] = '-';
+  }
+  $form['title']['#access'] = FALSE;
+
+  $options = array();
+  $groups = thsc_group_load_multiple();
+  foreach ($groups as $group) {
+    $options[$group->group_id] = $group->group_name;
+  }
+  if (!isset($form_state['values'])) {
+    $selected_group_id = !empty($node->group_id) ? $node->group_id : NULL;
+  }
+  else {
+    $selected_group_id = isset($form_state['values']['group_id']) ? $form_state['values']['group_id'] : NULL;
+  }
+
+  $form['group_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Please select a group',
+    '#options' => $options,
+    '#required' => TRUE,
+    '#default_value' => $selected_group_id,
+    '#ajax' => array(
+      'wrapper' => 'practice-teams-div',
+      'callback' => 'thsc_practice_form_group_callback'
+    ),
+    '#weight' => -20
+  );
+
+  $form['teams'] = array(
+    '#type' => 'fieldset',
+    '#prefix' => '<div id="practice-teams-div">',
+    '#suffix' => '</div>',
+    '#tree' => 1,
+    '#weight' => -15
+  );
+  if (!empty($selected_group_id)) {
+    $team_options = _thsc_practice_group_teams_options($selected_group_id);
+    $form['teams']['0']['team_id'] = array(
+      '#type' => 'select',
+      '#title' => 'Home Team',
+      '#options' => $team_options,
+      '#required' => TRUE,
+      '#default_value' => isset($node->teams[0]['team_id']) ? $node->teams[0]['team_id'] : NULL
+    );
+  }
+
+  return $form;
+}
+
+function thsc_practice_form_group_callback($form, $form_state) {
+  return $form['teams'];
+}
+
+function thsc_practice_validate($node, $form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    form_set_error('group_id', 'There is no ACTIVE SEASON at this moment!');
+  }
+}
+
+function thsc_practice_node_submit($node, $form, &$form_state) {
+  if ($node->type == 'thsc_practice') {
+    $current_seasonid = variable_get('thsc_active_season', 0);
+    if (empty($node->teams[0]['nid'])) {
+      $node->teams[0]['season_id'] = $current_seasonid;
+      $node->teams[0]['nid'] = $node->nid;
+    }
+  }
+}
+
+function thsc_practice_node_presave($node) {
+  if ($node->type == 'thsc_practice') {
+    if (empty($node->teams[0]['team_name'])) {
+      $team_a = thsc_team_load($node->teams[0]['team_id']);
+      if (!empty($team_a)) {
+        $team_a_name = $team_a->team_name;
+      }
+      else {
+        $team_a_name = '';
+      }
+    }
+    else {
+      $team_a_name = $node->teams[0]['team_name'];
+    }
+    if (!empty($team_a_name)) {
+      $node->title = $team_a_name . ' Practice';
+    }
+    else {
+      $node->title = '-';
+    }
+  }
+}
+
+function thsc_practice_load($nodes) {
+  $rows = thsc_practice_rows_load_multiple(array_keys($nodes));
+  foreach ($rows as $nid => $practice) {
+    foreach ($practice as $k => $v) {
+      $nodes[$nid]->$k = $v;
+    }
+  }
+}
+
+function thsc_practice_insert($node) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if ((empty($node->teams)) || (!is_array($node->teams)) || (count($node->teams) < 1)) {
+    return; // there isn't valid data for game rows
+  }
+  db_insert('thsc_practice')->fields(array(
+    'season_id' => $current_seasonid,
+    'nid' => $node->nid,
+    'team_id' => $node->teams[0]['team_id'],
+  ))->execute();
+}
+
+function thsc_practice_update($node) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $practice = db_query('SELECT COUNT(*) AS Cnt FROM {thsc_practice} WHERE season_id = :season_id AND nid = :nid', array(
+    ':season_id' => $current_seasonid,
+    ':nid' => $node->nid
+  ));
+  if ((!$practice) || ($practice->fetchObject()->Cnt == 0)) {
+    thsc_practice_insert($node);
+  }
+  else {
+    $current_seasonid = variable_get('thsc_active_season', 0);
+    db_update('thsc_practice')->fields(array(
+      'team_id' => $node->teams[0]['team_id'],
+    ))->condition('season_id', $current_seasonid, '=')->condition('nid', $node->nid, '=')->execute();
+  }
+}
+
+function thsc_practice_delete($node) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  db_delete('thsc_practice')->condition('nid', $node->nid, '=')->condition('season_id', $current_seasonid, '=')->execute();
+}
+
+function thsc_practice_prepare($node) {
+  if (!isset($node->group_id)) {
+    $node->group_id = 0;
+  }
+  if (!isset($node->group_name)) {
+    $node->group_name = '';
+  }
+  if (!isset($node->teams)) {
+    $node->teams = array();
+    $node->teams[0] = array(
+      'nid' => 0,
+      'team_id' => 0,
+      'team_name' => '',
+    );
+  }
+}
+
+/**
+ * Returns an array with teams and group information
+ * teams member has two rows, each row related to one record of thsc_practice table
+ * group_id and group_name would be the other members of the returned array.
+ * [teams]
+ * ....[0] => row 2
+ * ....[1] => row 2
+ * [group_id]
+ * [group_name]
+ *
+ * @param unknown $nid
+ */
+function thsc_practice_rows_load($nid) {
+  $query = _thsc_practice_select_query();
+  $query->condition('g.nid', $nid, '=');
+  $result = $query->execute();
+  $out = array();
+  $teams = array();
+  if ($result) {
+    $rec = $result->fetchObject();
+    $team = thsc_team_load($rec->team_id);
+    $teams[0] = array(
+      'nid' => $rec->nid,
+      'team_id' => $rec->team_id,
+      'team_name' => $team->team_name,
+    );
+    if (empty($out['group_id'])) {
+      $group = thsc_group_load($team->group_id);
+      $out['group_id'] = $group->group_id;
+      $out['group_name'] = $group->group_name;
+    }
+  }
+  $out['teams'] = $teams;
+  return $out;
+}
+
+/**
+ * Returns an array of arrays, keyed with nid, each item with same information as thsc_practice_rows_load function.
+ *
+ * @param string $nids
+ */
+function thsc_practice_rows_load_multiple($nids = NULL) {
+  $query = _thsc_practice_select_query();
+  if (!empty($nids)) {
+    $query->condition('g.nid', $nids, 'IN');
+  }
+  $result = $query->execute();
+  $ret = array();
+  foreach ($result as $rec) {
+    $nid = $rec->nid;
+    if (!array_key_exists($nid, $ret)) {
+      $ret[$nid] = array(
+        'group_id' => 0,
+        'group_name' => '',
+        'teams' => array()
+      );
+    }
+    $team = thsc_team_load($rec->team_id);
+    $ret[$nid]['teams'][0] = array(
+      'nid' => $rec->nid,
+      'team_id' => $rec->team_id,
+      'team_name' => $team->team_name,
+    );
+    if ($ret[$nid]['group_id'] == 0) {
+      $group = thsc_group_load($team->group_id);
+      $ret[$nid]['group_id'] = $group->group_id;
+      $ret[$nid]['group_name'] = $group->group_name;
+    }
+  }
+  return $ret;
+}
+
+function _thsc_practice_select_query() {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $query = db_select('thsc_practice', 'g');
+  $query->condition('g.season_id', $current_seasonid, '=');
+  $query->fields('g', array(
+    'nid',
+    'team_id',
+  ));
+  $query->orderBy('g.nid');
+  return $query;
+}
+
+function _thsc_practice_group_teams_options($group_id) {
+  $teams = thsc_team_load_multiple(FALSE, array(
+    'group_id' => $group_id
+  ));
+  $options = array();
+  foreach ($teams as $team) {
+    $options[$team->team_id] = $team->team_name;
+  }
+  return $options;
+}
+

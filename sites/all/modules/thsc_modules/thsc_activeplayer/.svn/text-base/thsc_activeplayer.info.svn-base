@@ -1,0 +1,9 @@
+name = THSC Active Player Entity
+description = An entity to hold THSC player's seasonal information after registeration
+core = 7.x
+package = THSC modules
+dependencies[] = field
+dependencies[] = date
+dependencies[] = date_api
+dependencies[] = thsc_player
+files[] = thsc_activeplayer.controller.inc

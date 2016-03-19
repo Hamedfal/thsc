@@ -1,0 +1,43 @@
+/**
+ *	common elements
+ */
+
+/* to hide elements that require js support */
+.marinelli-hide-no-js{
+	display:none;
+}
+
+/* Improve text contrast into page structure of theme see #1008340 */
+.page-admin-structure-block-demo-marinelli .block-region {
+  font-size: 1.5em;
+  padding: 15px;
+  color: black;
+  background: #f8fab3;
+  outline:2px dashed #bcc308;
+}
+
+/* block demonstration page: set a min-height to see the region  */
+
+.page-admin-structure-block-demo-marinelli #topBarContainer{ 
+  min-height: 100px;
+  text-align: center;
+}
+
+/* THSC custom styles */
+.thsc-homepage-articles h2 {
+  background: #8c0000;
+  color:#fff;	
+}
+
+.thsc-group-name {
+	font-weight: bold;
+	font-variant: small-caps;
+}
+
+.thsc-team-name {
+	font-weight: bold;
+}
+
+.thsc-game-score {
+	font-style: italic;
+}

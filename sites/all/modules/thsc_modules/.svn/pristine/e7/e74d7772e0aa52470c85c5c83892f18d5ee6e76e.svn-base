@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_game
+ */
+function thsc_game_schema() {
+  $schema = array();
+
+  $schema['thsc_game'] = array(
+    'description' => 'The database table to keep game information for THSC.',
+    'fields' => array(
+      'game_id' => array(
+        'description' => 'Primary key along with row_id.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),
+      'row_id' => array(
+        'description' => 'Second part of primary key, values are 1 or 2 per game',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1
+      ),
+      'season_id' => array(
+        'description' => 'Node id of the Season that this game is related to',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'team_id' => array(
+        'description' => 'Map to thsc_team entity',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'score_gf' => array(
+        'description' => 'Score Gole Forward for this row of the game',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      ),
+      'score_ga' => array(
+        'description' => 'Score Gole Accepted for this row of the game',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      ),
+      'event_nid' => array(
+        'description' => 'Node id of the event calendar related to this game',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      ),
+      'game_time' => array(
+      	'description' => 'timestamp, date and time of the game',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'location_nid' => array(
+      	'description' => 'Node id of the locaiton',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'wtd_result' => array(
+        'description' => 'Win, Lose or Draw result',
+        'type' => 'char',
+        'length' => 1,
+        'not null' => FALSE
+      ),
+      'points' => array(
+        'description' => 'Points this row of the game gets',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      )
+    ),
+    'primary key' => array(
+      'season_id',
+      'game_id',
+      'row_id'
+    ),
+    'indexes' => array(
+      'team_ids' => array(
+        'team_id'
+      )
+    )
+  );
+
+  return $schema;
+}

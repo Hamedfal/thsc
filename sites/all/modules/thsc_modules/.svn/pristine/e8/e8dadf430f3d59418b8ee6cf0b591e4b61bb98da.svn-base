@@ -1,0 +1,884 @@
+<?php
+
+/**
+ * @file
+ * Implements the basic functionality required to create and display a player in THSC.
+ */
+
+// @todo: Remove this line for production:
+include 'thsc_develfile.inc';
+
+function thsc_player_entity_info() {
+  $info['thsc_player'] = array(
+    'label' => t('THSC Member Information'),
+    'controller class' => 'ThscPlayerController',
+    'views controller class' => 'EntityDefaultViewsController',
+    'module' => 'thsc_player',
+    'base table' => 'thsc_player',
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'thsc_player_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'player_id',
+      'bundle' => 'bundle_type'
+    ),
+    'bundle keys' => array(
+      'bundle' => 'bundle_type'
+    ),
+    'static cache' => FALSE,
+    'bundles' => array(
+      'thsc_player' => array(
+        'label' => 'Player Info',
+        'admin' => array(
+          'path' => 'admin/structure/thsc_player/manage',
+          'access arguments' => array(
+            'administer thsc_player'
+          )
+        )
+      )
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('THSC Member Information'),
+        'custom settings' => FALSE
+      )
+    )
+  );
+
+  return $info;
+}
+
+/*
+ * function thsc_player_entity_property_info() { $info = array(); $properties = &$info['thsc_player']['properties']; $properties = array( 'player_id' => array( 'type' => 'integer', 'label' => t('Member ID'), 'schema field' => 'player_id' ), 'first_name' => array( 'type' => 'text', 'label' => 'First Name', 'schema field' => 'first_name' ), 'last_name' => array( 'type' => 'text', 'label' => 'Last Name', 'schema field' => 'last_name' ), 'gender' => array( 'type' => 'text', 'label' => 'Gender', 'schema field' => 'gender' ), 'birthdate' => array( 'type' => 'date', 'label' => 'Birth Date', 'schema field' => 'birthdate' ), 'created' => array( 'type' => 'date', 'label' => 'Created At', 'schema field' => 'created' ) ); return $info; }
+ */
+function thsc_player_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'thsc_player') . '/views'
+  );
+}
+
+function thsc_player_permission() {
+  return array(
+    'administer thsc_player' => array(
+      'title' => t('Administer Players'),
+      'restrict access' => TRUE
+    ),
+    'view own thsc_player' => array(
+      'title' => t('View Own Childern')
+    ),
+    'edit own thsc_player' => array(
+      'title' => t('Add/Edit Own Children')
+    )
+  );
+}
+
+function thsc_player_uri($player) {
+  return array(
+    'path' => 'thsc_player/' . $player->player_id
+  );
+}
+
+function thsc_player_load($player_id = NULL, $reset = FALSE) {
+  $player_ids = (isset($player_id) ? array(
+    $player_id
+  ) : FALSE);
+  $player = thsc_player_load_multiple($player_ids, $reset);
+  return $player ? reset($player) : FALSE;
+}
+
+function thsc_player_load_multiple($player_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('thsc_player', $player_ids, $conditions, $reset);
+}
+
+function thsc_player_menu() {
+  $item['thsc_player'] = array(
+    'title' => 'THSC Members',
+    'page callback' => 'thsc_player_info',
+    'access arguments' => array(
+      'administer thsc_player'
+    )
+  );
+
+  $items['admin/structure/thsc_player/manage'] = array(
+    'title' => 'THSC Members',
+    'description' => 'Manage THSC Player Structure',
+    'page callback' => 'thsc_player_list_players',
+    'access arguments' => array(
+      'administer thsc_player'
+    )
+  );
+
+  $items['admin/structure/thsc_player/manage/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_player/%thsc_player'] = array(
+    'title' => 'THSC Member',
+    'page callback' => 'thsc_player_view',
+    'page arguments' => array(
+      1
+    ),
+    'access callback' => 'thsc_player_access',
+    'access arguments' => array(
+      'view',
+      1
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_player/%thsc_player/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_player/%thsc_player/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_player_form',
+      1
+    ),
+    'access callback' => 'thsc_player_access',
+    'access arguments' => array(
+      'edit',
+      1
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  $items['thsc_player/register/%thsc_player'] = array(
+    'title' => 'Register',
+    'page callback' => 'thsc_player_register',
+    'page arguments' => array(
+      2
+    ),
+    'access callback' => 'thsc_player_access',
+    'access arguments' => array(
+      'edit',
+      2
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  $items['thsc_player/add'] = array(
+    'title' => 'Add THSC Members',
+    'page callback' => 'thsc_player_add',
+    'access callback' => 'thsc_player_access',
+    'access arguments' => array(
+      'add'
+    )
+  );
+
+  $items['thsc_player/mychildren'] = array(
+    'title' => 'My Children',
+    'page callback' => 'thsc_player_list_players',
+    'access arguments' => array(
+      'view own thsc_player'
+    )
+  );
+
+  $items['thsc_player/makepayment/user/%'] = array(
+    'title' => 'Make Payment',
+    'page callback' => 'thsc_player_payment_calculate',
+    'page arguments' => array(
+      3
+    ),
+    'access arguments' => array(
+      'view own thsc_player'
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  return $items;
+}
+
+function thsc_player_menu_alter(&$items) {
+  $items['cart']['page callback'] = 'thsc_player_bypass_us_cart';
+}
+
+function thsc_player_bypass_us_cart() {
+  if (thsc_module_is_parent()) {
+    $items = uc_cart_get_contents();
+    if (!empty($items)) {
+      drupal_goto('cart/checkout');
+      return;
+    }
+  }
+  return uc_cart_view();
+}
+
+function thsc_player_access($action = 'view', $player = NULL) {
+  if ($action == 'add') {
+    return ((user_access('administer thsc_player')) || (user_access('edit own thsc_player')));
+  }
+  // $action = 'edit' or 'view'
+  if (user_access('administer thsc_player')) {
+    return TRUE;
+  }
+  // for other users, they can only edit their own children
+  if (empty($player)) {
+    return FALSE;
+  }
+  if (!is_object($player) && is_int($player)) {
+    $player = thsc_player_load($player);
+  }
+  $parent_object = entity_metadata_wrapper('thsc_player', $player)->field_parent->value();
+  if (is_object($parent_object)) {
+    $parent_uid = $parent_object->uid;
+  }
+  else if (is_int($parent_object)) {
+    $parent_uid = $parent_object;
+  }
+  else {
+    return FALSE;
+  }
+
+  return ($GLOBALS['user']->uid == $parent_uid);
+}
+
+function thsc_player_list_players() {
+  // if administrator is working, show all players, otherwise only show players related to current logged in user
+  $show_mychildren = thsc_module_is_parent();
+  $children_count = 0;
+  $total_fee = 0;
+  $current_season_id = variable_get('thsc_registering_season_id', 0);
+  $fee1 = thsc_activeplayer_membership_fee(1);
+  $fee2 = thsc_activeplayer_membership_fee(2);
+  $fee3 = thsc_activeplayer_membership_fee(3);
+
+  // use datatables module if enabled
+  $use_datatables = module_exists('datatables');
+  $content = array();
+  $rows = array();
+  if ($show_mychildren) {
+    $player_ids = thsc_activeplayer_children_playerids($GLOBALS['user']->uid);
+    $players = thsc_player_load_multiple($player_ids);
+  }
+  else {
+    $players = thsc_player_load_multiple();
+  }
+  if (!empty($players)) {
+    foreach ($players as $player) {
+      // for each player, we need to get the latest information related to "thsc_activeplayer" entity
+      if (!empty($current_season_id)) {
+        $query = db_select('thsc_activeplayer', 'ap');
+        $query->condition('ap.bundle_type', 'thsc_activeplayer', '=')->condition('ap.player_id', $player->player_id, '=')->condition('ap.season_id', $current_season_id, '=')->fields('ap', array(
+          'apid'
+        ));
+        //we need the first record only (there should only be one record!!)
+        $activeplayers = $query->execute()->fetchAssoc();
+        if (!empty($activeplayers)) {
+          $apid = $activeplayers['apid'];
+          $activeplayer = thsc_activeplayer_load($apid);
+          if (!empty($activeplayer)) {
+            $children_count++; // we keep track of not paid items only if this is an end-user (authenitcated)
+            if ($activeplayer->payment_made == 1) {
+              $registration_info = 'YES - PAID';
+            }
+            else {
+              $thischild_fee = 0;
+              if ($show_mychildren) {
+                switch ($children_count) {
+                  case 1 :
+                    $thischild_fee = $fee1;
+                    break;
+                  case 2 :
+                    $thischild_fee = $fee2;
+                    break;
+                  default :
+                    $thischild_fee = $fee3;
+                    break;
+                }
+                $total_fee += $thischild_fee;
+              }
+              $registration_info = 'YES - not paid! ';// . $thischild_fee;
+            }
+            $registration_info = l($registration_info, 'thsc_activeplayer/' . $apid);
+          }
+        }
+        else {
+          $registration_info = l('NO, click to register', 'thsc_player/register/' . $player->player_id);
+        }
+      }
+      else {
+        $registration_info = '(Registration Closed!)';
+      }
+      $row_data = array(
+        'id' => $player->player_id,
+        'first_name' => $player->first_name,
+        'last_name' => l($player->last_name, 'thsc_player/' . $player->player_id),
+        'gender' => $player->gender,
+        'thsc_activeplayer' => $registration_info
+      );
+      if (module_exists('thsc_game')) {
+        $row_data['schedule'] = l('Full Schedule', 'thsc_game/aplayerschedule/' . $apid . '/full');
+        $row_data['live_schedule'] = l('Future Schedule', 'thsc_game/aplayerschedule/' . $apid . '/live');
+      }
+      if ($use_datatables) {
+        $rows[] = $row_data;
+      }
+      else {
+        $rows[] = array(
+          'data' => $row_data
+        );
+      }
+    }
+    if ($use_datatables) {
+      $header = array(
+        array(
+          'data' => 'ID',
+          'datatable_options' => array(
+            'bSortable' => TRUE,
+            'bSearchable' => FALSE
+          )
+        ),
+        array(
+          'data' => 'First Name',
+          'datatable_options' => array(
+            'bSortable' => TRUE,
+            'bSearchable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Last Name',
+          'datatable_options' => array(
+            'bSortable' => TRUE,
+            'bSearchable' => TRUE
+          )
+        ),
+        array(
+          'data' => 'Gender',
+          'datatable_options' => array(
+            'bSortable' => TRUE,
+            'bSearchable' => FALSE
+          )
+        ),
+        array(
+          'data' => 'Registered for Season',
+          'datatable_options' => array(
+            'bSortable' => FALSE,
+            'bSearchable' => TRUE
+          )
+        )
+      );
+
+      if (module_exists('thsc_game')) {
+        $header[] = array(
+          'data' => 'Full Schedule',
+          'datatable_options' => array(
+            'bSortable' => FALSE,
+            'bSearchable' => FALSE
+          )
+        );
+        $header[] = array(
+          'data' => 'Future Schedule',
+          'datatable_options' => array(
+            'bSortable' => FALSE,
+            'bSearchable' => FALSE
+          )
+        );
+      }
+
+      $attributes['datatable_options'] = array(
+        'bFilter' => TRUE,
+        'bInfo' => TRUE,
+        'bSort' => TRUE
+      );
+
+      $content['entity_datatable'] = array(
+        '#theme' => 'datatable',
+        '#header' => $header,
+        '#rows' => $rows,
+        '#attributes' => $attributes
+      );
+    }
+    else {
+      $content['entity_table'] = array(
+        '#theme' => 'table',
+        '#rows' => $rows,
+        '#header' => array(
+          'ID',
+          'First Name',
+          'Last Name',
+          'Gender',
+          'Registered for Season'
+        )
+      );
+      if (module_exists('thsc_game')) {
+        $content['entity_table']['#header'][] = 'Full Schedule';
+        $content['entity_table']['#header'][] = 'Future Schedule';
+      }
+    }
+    if ($children_count > 0) {
+      $content['payment_path'] = array(
+        '#type' => 'item',
+        '#markup' => 'Please click here to make payment for this season: ' . l('Payment', 'thsc_player/makepayment/user/' . $GLOBALS['user']->uid),
+      );
+    }
+  }
+  else {
+    // There were no entities. Tell the user.
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No THSC Members currently exist!')
+    );
+  }
+
+  return $content;
+}
+
+function thsc_player_payment_calculate($parent_uid) {
+  $children_ids = thsc_activeplayer_children_playerids($parent_uid);
+  if (!empty($children_ids)) {
+    $query = db_select('thsc_activeplayer', 'a');
+    $current_season_id = variable_get('thsc_registering_season_id', 0);
+    $query->condition('a.season_id', $current_season_id, '=');
+    $query->condition('a.player_id', $children_ids, 'IN');
+    $query->fields('a', array(
+      'apid',
+      'payment_made'
+    ));
+    $query->orderBy('payment_made', 'DESC');
+    $activeplayers = $query->execute();
+    if (!empty($activeplayers)) {
+      $child_number = 0;
+      uc_cart_empty();
+      foreach ($activeplayers as $activeplayer) {
+        $child_number++;
+        if ($activeplayer->payment_made == 0) {
+          // this payment is pending. We need to add a fee to user's cart, based on $child_number
+          switch ($child_number) {
+            case 1 :
+              uc_cart_add_item(54);
+              break;
+            case 2 :
+              uc_cart_add_item(55);
+              break;
+            default :
+              uc_cart_add_item(56);
+              break;
+          }
+        }
+      }
+    }
+    drupal_goto('cart');
+  }
+  else {
+    $content['nochild'] = array(
+      '#type' => 'markup',
+      '#markup' => 'You don\'t have any registered child yet!'
+    );
+    return $content;
+  }
+}
+
+function thsc_player_uc_order($op, $order, $arg2) {
+  if (($op == 'update') && ($order->order_status == 'payment_received')) {
+    // the order is just being completed. we can set the flag is thsc_activeplayer table
+    $parent_uid = $order->uid;
+    if (empty($parent_uid)) {
+      return;
+    }
+    $children_ids = thsc_activeplayer_children_playerids($parent_uid);
+    if (!empty($children_ids)) {
+      $query = db_select('thsc_activeplayer', 'a');
+      $current_season_id = variable_get('thsc_registering_season_id', 0);
+      $query->condition('a.season_id', $current_season_id, '=');
+      $query->condition('a.player_id', $children_ids, 'IN');
+      $query->fields('a', array(
+        'apid',
+        'payment_made'
+      ));
+      $query->orderBy('payment_made', 'DESC');
+      $activeplayers = $query->execute();
+      if (!empty($activeplayers)) {
+        $child_number = 0;
+        // create a copy of products inside this order so we can match it to children
+        // we only need to keep $product->nid (which is membership fee of first,second or third child)
+        // and $product->qty so we can decrement it for each one that we update. We use nid as the key and
+        // qty as the value
+        $items = array();
+        foreach ($order->products as $key => $product) {
+          if (array_key_exists($product->nid, $items)) {
+            $items[$product->nid] += $product->qty;
+          }
+          else {
+            $items[$product->nid] = $product->qty;
+          }
+        }
+        foreach ($activeplayers as $activeplayer) {
+          $child_number++;
+          if ($activeplayer->payment_made == 0) {
+            switch ($child_number) {
+              case 1 :
+                $node_id = 54;
+                break;
+              case 2 :
+                $node_id = 55;
+                break;
+              default :
+                $node_id = 56;
+                break;
+            }
+            // check to see if there was a row in the order matching same node_id we are looking for
+            if (array_key_exists($node_id, $items) && ($items[$node_id] > 0)) {
+              $items[$node_id]--; // use one payment for this child
+              if ($items[$node_id] == 0) {
+                unset($items[$node_id]);
+              }
+              $query = db_update('thsc_activeplayer');
+              $query->condition('season_id', $current_season_id, '=');
+              $query->condition('apid', $activeplayer->apid, '=');
+              $query->fields(array(
+                'payment_made' => 1
+              ));
+              $query->execute();
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function thsc_player_view($player, $view_mode = 'full') {
+  $entity_type = 'thsc_player';
+  $player->content = array();
+
+  field_attach_prepare_view($entity_type, array(
+    $player->player_id => $player
+  ), $view_mode);
+  entity_prepare_view($entity_type, array(
+    $player->player_id => $player
+  ));
+  $player->content += field_attach_view($entity_type, $player, $view_mode);
+
+  $player->content['created'] = array(
+    '#type' => 'item',
+    '#title' => t('Created date'),
+    '#markup' => format_date($player->created),
+    '#weight' => -20
+  );
+  $player->content['first_name'] = array(
+    '#type' => 'item',
+    '#title' => t('First Name'),
+    '#markup' => $player->first_name,
+    '#weight' => -10
+  );
+  $player->content['last_name'] = array(
+    '#type' => 'item',
+    '#title' => t('Last Name'),
+    '#markup' => $player->last_name,
+    '#weight' => -8
+  );
+  $player->content['gender'] = array(
+    '#type' => 'item',
+    '#title' => t('Gender'),
+    '#markup' => ($player->gender == 'M') ? 'Male' : 'Female',
+    '#weight' => -6
+  );
+  $player->content['birthdate'] = array(
+    '#type' => 'item',
+    '#title' => t('Birth Date'),
+    '#markup' => format_date($player->birthdate, 'custom', 'M d, Y'),
+    '#weight' => -4
+  );
+  global $language;
+  $langcode = $language->language;
+  module_invoke_all('entity_view', $player, $entity_type, $view_mode, $langcode);
+  drupal_alter(array(
+    'thsc_player_view',
+    'entity_view'
+  ), $player->content, $entity_type);
+
+  return $player->content;
+}
+
+function thsc_player_field_extra_fields() {
+  $return = array();
+  $return['thsc_player']['thsc_player'] = array(
+    'form' => array(
+      'first_name' => array(
+        'label' => 'First Name',
+        'weight' => -10
+      ),
+      'last_name' => array(
+        'label' => 'Last Name',
+        'weight' => -8
+      ),
+      'gender' => array(
+        'label' => 'Gender',
+        'weight' => -6
+      ),
+      'birthdate' => array(
+        'label' => 'Birth Day',
+        'weight' => -5
+      )
+    )
+  );
+
+  return $return;
+}
+
+function thsc_player_add() {
+  $player = entity_get_controller('thsc_player')->create();
+  return drupal_get_form('thsc_player_form', $player);
+}
+
+function thsc_player_form($form, &$form_state, $player) {
+  if (thsc_module_is_parent()) {
+    $form['parent_tip'] = array(
+      '#type' => 'markup',
+      '#markup' => 'This form is the first step for adding your child/children to your profile. This is not the actual registration form!<br >' . 'After you added your child to your profile, you can go to ' . l('My Children', 'thsc_player/mychildren') . ' to register them for the current season.',
+      '#weight' => -20
+    );
+  }
+  $form['first_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'First Name',
+    '#required' => TRUE,
+    '#default_value' => $player->first_name,
+    '#weight' => -10
+  );
+  $form['last_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Last Name',
+    '#required' => TRUE,
+    '#default_value' => $player->last_name,
+    '#weight' => -8
+  );
+  $form['gender'] = array(
+    '#type' => 'radios',
+    '#title' => 'Gender',
+    '#options' => array(
+      'M' => 'Male',
+      'F' => 'Female'
+    ),
+    '#required' => TRUE,
+    '#default_value' => $player->gender,
+    '#weight' => -6
+  );
+  $form['birthdate'] = array(
+    '#type' => 'date_popup',
+    '#title' => 'Date of Birth',
+    '#requried' => TRUE,
+    '#default_value' => format_date($player->birthdate, 'custom', 'Y-m-d'),
+    '#date_format' => 'Y-m-d',
+    '#date_year_range' => '-17:-3',
+    '#weight' => -4
+  );
+  $form['player'] = array(
+    '#type' => 'value',
+    '#value' => $player
+  );
+
+  field_attach_form('thsc_player', $player, $form, $form_state);
+  // hide the "parent selection" element for regular users (THSC Staff/Managers and administrators will see this)
+  if (thsc_module_is_parent()) {
+    $form['field_parent']['#type'] = 'hidden';
+    $form['field_parent'][LANGUAGE_NONE]['#required'] = 0;
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100
+  );
+  if (!empty($player->player_id) && user_access('administer thsc_player')) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#submit' => array(
+        'thsc_player_form_delete'
+      ),
+      '#weight' => 120
+    );
+  }
+
+  return $form;
+}
+
+function thsc_player_form_validate($form, &$form_state) {
+  field_attach_form_validate('thsc_player', $form_state['values']['player'], $form, $form_state);
+}
+
+function thsc_player_form_submit($form, &$form_state) {
+  $player = $form_state['values']['player'];
+  $player->first_name = $form_state['values']['first_name'];
+  $player->last_name = $form_state['values']['last_name'];
+  $player->gender = $form_state['values']['gender'];
+  $date = new DateObject($form_state['values']['birthdate'], NULL, 'Y-m-d');
+  $player->birthdate = $date->getTimestamp();
+  field_attach_submit('thsc_player', $player, $form, $form_state);
+  // when adding new record, for authenticated users, we should set the current user in the reference field
+  if (thsc_module_is_parent()) {
+    entity_metadata_wrapper('thsc_player', $player)->field_parent->set($GLOBALS['user']);
+  }
+  $player = thsc_player_save($player);
+  $form_state['redirect'] = "thsc_player/$player->player_id";
+}
+
+function thsc_player_save(&$player) {
+  return entity_get_controller('thsc_player')->save($player);
+}
+
+function thsc_player_form_delete($form, &$form_state) {
+  $player = $form_state['values']['player'];
+  if ($player) {
+    db_query('DELETE FROM {thsc_activeplayer} WHERE player_id = :player_id', array(
+      ':player_id' => $player->player_id
+    ));
+  }
+  entity_get_controller('thsc_player')->delete($player);
+  drupal_set_message(t('The Player %first_name (ID %id) has been deleted', array(
+    '%first_name' => $player->first_name,
+    '%id' => $player->player_id
+  )));
+  $form_state['redirect'] = '';
+}
+
+function thsc_player_register($player) {
+  $current_season_id = variable_get('thsc_registering_season_id', 0);
+  if (empty($current_season_id)) {
+    drupal_set_message('Registration is not open at this time!');
+    drupal_goto('/');
+    return;
+  }
+  $query = db_select('thsc_activeplayer', 'ap');
+  $query->condition('ap.bundle_type', 'thsc_activeplayer', '=')->condition('ap.player_id', $player->player_id, '=')->condition('ap.season_id', $current_season_id, '=')->fields('ap', array(
+    'apid'
+  ));
+  // e need the first record only (there should only be one record!!)
+  $activeplayers = $query->execute()->fetchAssoc();
+  if (empty($activeplayers)) {
+    return drupal_get_form('thsc_player_register_form', $player);
+  }
+  else {
+    drupal_set_message('This player has already been registered!');
+    drupal_goto('thsc_activeplayer/' . $activeplayers['apid']);
+  }
+}
+
+function thsc_player_register_form($form, &$form_state, $player) {
+  $form['first_name'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Do you want to register ' . $player->first_name . ' ' . $player->last_name . ' for this season?'
+  );
+  $form['player'] = array(
+    '#type' => 'value',
+    '#value' => $player
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100
+  );
+  return $form;
+}
+
+function thsc_player_register_form_submit($form, &$form_state) {
+  $player = $form_state['values']['player'];
+  $current_season_id = variable_get('thsc_registering_season_id', 0);
+  $query = db_select('thsc_activeplayer', 'ap');
+  $query->condition('ap.bundle_type', 'thsc_activeplayer', '=')->condition('ap.player_id', $player->player_id, '=')->condition('ap.season_id', $current_season_id, '=')->fields('ap', array(
+    'apid'
+  ));
+  // e need the first record only (there should only be one record!!)
+  $activeplayers = $query->execute()->fetchAssoc();
+  if (empty($activeplayers)) {
+    $activeplayer = entity_get_controller('thsc_activeplayer')->create();
+    $activeplayer->player_id = $player->player_id;
+    $activeplayer->season_id = $current_season_id;
+    $activeplayer = thsc_activeplayer_save($activeplayer);
+    $form_state['redirect'] = "thsc_activeplayer/$activeplayer->apid";
+  }
+  else {
+    $form_state['redirect'] = "thsc_activeplayer/" . $activeplayers['apid'];
+  }
+}
+
+function thsc_player_calculate_age($birthdate) {
+  $unixage = time() - $birthdate;
+  return floor($unixage / (365 * 24 * 60 * 60));
+}
+
+/**
+ * Performing custom actions when a season becomes "Registering"!
+ * We should set the system variable "thsc_registering_season_id" to the node id of that season.
+ * At any given time, only one season can be "registering". If there is no system variable (0), it means that
+ * at that moment no registration is available.
+ */
+function thsc_player_node_validate($node, $form, &$form_state) {
+  if ($node->type != 'season') {
+    return;
+  }
+  $thisnode_wrapper = entity_metadata_wrapper('node', $node);
+  // when a user is turning on "Registering" flag of a season node,
+  // we need to make sure there is no other season node already reagistering! Same goes for "activeseason" flag
+  if ($thisnode_wrapper->field_active_season->value() == '1') {
+    // load all other season nodes:
+    $query = new EntityFieldQuery();
+    $entities = $query->entityCondition('entity_type', 'node')->entityCondition('bundle', 'season')->execute();
+    $seasons = node_load_multiple(array_keys($entities['node']));
+    foreach ($seasons as $season) {
+      if ($season->nid != $node->nid) {
+        if (entity_metadata_wrapper('node', $season)->field_active_season->value() == '1') {
+          form_set_error('#field_active_season', 'There is another season already "ACTIVE"!! You cannot enable this flag for two seasons at the same time!');
+          return;
+        }
+      }
+    }
+    variable_set('thsc_active_season', $node->nid);
+  }
+  // the else part for "activeseason" is checked below, after dealing with "registering" field.
+
+  if ($thisnode_wrapper->field_registering->value() == '1') {
+    if ($thisnode_wrapper->field_active_season->value() != '1') {
+      form_set_error('#field_active_season', 'You cannot set "Registering" flag for a season that is not ACTIVE!');
+      return;
+    }
+    // load all other season nodes:
+    $query = new EntityFieldQuery();
+    $entities = $query->entityCondition('entity_type', 'node')->entityCondition('bundle', 'season')->execute();
+    $seasons = node_load_multiple(array_keys($entities['node']));
+    foreach ($seasons as $season) {
+      if ($season->nid != $node->nid) {
+        if (entity_metadata_wrapper('node', $season)->field_registering->value() == '1') {
+          form_set_error('#field_registering', 'There is another season already "Registering"!! You cannot enable this flag for two seasons at the same time!');
+          return;
+        }
+      }
+    }
+    // here, we know there is only this node that is becoming "registering"!!
+    variable_set('thsc_registering_season_id', $node->nid);
+  }
+  else {
+    $other_seasons_registering = FALSE;
+    // load all other season nodes:
+    $query = new EntityFieldQuery();
+    $entities = $query->entityCondition('entity_type', 'node')->entityCondition('bundle', 'season')->execute();
+    $seasons = node_load_multiple(array_keys($entities['node']));
+    foreach ($seasons as $season) {
+      if ($season->nid != $node->nid) {
+        if (entity_metadata_wrapper('node', $season)->field_registering->value() == '1') {
+          $other_seasons_registering = TRUE;
+          break;
+        }
+      }
+    }
+    if (!$other_seasons_registering) {
+      // it seems that there is no registering season at this moment
+      variable_set('thsc_registering_season_id', 0);
+    }
+  }
+
+  if ($thisnode_wrapper->field_active_season->value() == '0') {
+    $current_activeseason_nid = variable_get('thsc_active_season', 0);
+    if ($node->nid == $current_activeseason_nid) {
+      variable_set('thsc_active_season', '0');
+    }
+  }
+}
+

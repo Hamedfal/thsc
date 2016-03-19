@@ -1,0 +1,5 @@
+<?php
+
+function thsc_print($object) {
+  drupal_set_message('<pre>' . print_r($object, TRUE) . '</pre>');
+}

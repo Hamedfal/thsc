@@ -1,0 +1,153 @@
+<?php
+
+/**
+ * @file
+ * This file serves as a stub file for the thsc modules
+ *
+ */
+
+function thsc_modules_help($path, $arg) {
+  // re: http://drupal.org/node/767204
+  // 5. We need a master group (thsc_modules) that will be in a main
+  // thsc_modules.module.
+}
+
+function thsc_modules_init() {
+  drupal_add_library('system', 'ui');
+  drupal_add_css(drupal_get_path('module', 'thsc_modules') . '/thsc.css');
+  drupal_add_css(drupal_get_path('module', 'thsc_modules') . '/jquery-ui-1.10.4.custom/css/blitzer/jquery-ui-1.10.4.custom.min.css');
+}
+
+function thsc_modules_theme() {
+  return array(
+  	'thsc_link' => array(
+  	  'template' => 'thsc-link',
+  	  'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+  	  'variables' => array(
+  		  'value' => NULL,
+  	  ),
+    ),
+    'thsc_team_schedule_print' => array(
+  	  'template' => 'thsc-team-schedule',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'variables' => array(
+    	  'team' => NULL,
+        'schedule' => NULL,
+        'type' => NULL,
+      ),
+  	),
+    'thsc_registration_print' => array(
+      'template' => 'thsc-registration-print',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'variables' => array(
+    	  'player' => NULL,
+        'season' => NULL,
+      ),
+    ),
+  );
+}
+
+function template_preprocess_thsc_team_schedule_print(&$variables) {
+  $token_info = token_info();
+  $replacements = array();
+  foreach (array('site', 'store') as $t_type) {
+    $replacements[$t_type] = token_generate($t_type, drupal_map_assoc(array_keys($token_info['tokens'][$t_type])));
+  }
+
+  foreach ($replacements as $t_type => $tokens) {
+    foreach ($tokens as $token => $value) {
+      $key = str_replace('-', '_', $t_type . '_' . $token);
+      $key = str_replace('uc_', '', $key);
+      $variables[$key] = $value;
+    }
+  }
+  // Construct page title.
+  if (drupal_get_title()) {
+    $head_title = array(
+      'title' => strip_tags(drupal_get_title()),
+      'name' => variable_get('site_name', 'THSC'),
+    );
+  }
+  else {
+    $head_title = array('name' => variable_get('site_name', 'THSC'));
+    if (variable_get('site_slogan', '')) {
+      $head_title['slogan'] = variable_get('site_slogan', '');
+    }
+  }
+
+  // Add favicon.
+  if (theme_get_setting('toggle_favicon')) {
+    $favicon = theme_get_setting('favicon');
+    $type = theme_get_setting('favicon_mimetype');
+    drupal_add_html_head_link(array('rel' => 'shortcut icon', 'href' => drupal_strip_dangerous_protocols($favicon), 'type' => $type));
+  }
+  $variables['head'] = drupal_get_html_head();
+
+  // Set the default language if necessary.
+  $language = isset($GLOBALS['language']) ? $GLOBALS['language'] : language_default();
+
+  $variables['head_title'] = implode(' | ', $head_title);
+  $variables['base_path'] = base_path();
+  $variables['language']          = $language;
+  $variables['language']->dir     = $language->direction ? 'rtl' : 'ltr';
+  $group = thsc_group_load($variables['team']->group_id);
+  $variables['group'] = $group;
+}
+
+function template_preprocess_thsc_registration_print(&$variables) {
+  $token_info = token_info();
+  $replacements = array();
+  foreach (array('site', 'store') as $t_type) {
+    $replacements[$t_type] = token_generate($t_type, drupal_map_assoc(array_keys($token_info['tokens'][$t_type])));
+  }
+
+  foreach ($replacements as $t_type => $tokens) {
+    foreach ($tokens as $token => $value) {
+      $key = str_replace('-', '_', $t_type . '_' . $token);
+      $key = str_replace('uc_', '', $key);
+      $variables[$key] = $value;
+    }
+  }
+  // Construct page title.
+  if (drupal_get_title()) {
+    $head_title = array(
+      'title' => strip_tags(drupal_get_title()),
+      'name' => variable_get('site_name', 'THSC'),
+    );
+  }
+  else {
+    $head_title = array('name' => variable_get('site_name', 'THSC'));
+    if (variable_get('site_slogan', '')) {
+      $head_title['slogan'] = variable_get('site_slogan', '');
+    }
+  }
+
+  // Add favicon.
+  if (theme_get_setting('toggle_favicon')) {
+    $favicon = theme_get_setting('favicon');
+    $type = theme_get_setting('favicon_mimetype');
+    drupal_add_html_head_link(array('rel' => 'shortcut icon', 'href' => drupal_strip_dangerous_protocols($favicon), 'type' => $type));
+  }
+  $variables['head'] = drupal_get_html_head();
+
+  // Set the default language if necessary.
+  $language = isset($GLOBALS['language']) ? $GLOBALS['language'] : language_default();
+
+  $variables['head_title'] = implode(' | ', $head_title);
+  $variables['base_path'] = base_path();
+  $variables['language']          = $language;
+  $variables['language']->dir     = $language->direction ? 'rtl' : 'ltr';
+}
+
+/**
+ * Returns TRUE if the current user is a parent and not THSC staff of any form
+ */
+function thsc_module_is_parent() {
+  $user = $GLOBALS['user'];
+  if ($user && ($user->uid > 0)) {
+    return (!in_array('THSC Manager', $user->roles) && !in_array('THSC Staff', $user->roles) && !user_access('administer thsc_player'));
+  }
+  else {
+    return FALSE;
+  }
+}

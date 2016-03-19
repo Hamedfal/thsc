@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * This file serves as a stub file for the thsc modules
+ *
+ */
+
+function thsc_modules_help($path, $arg) {
+  // re: http://drupal.org/node/767204
+  // 5. We need a master group (thsc_modules) that will be in a main
+  // thsc_modules.module.
+}
+
+function thsc_modules_init() {
+  drupal_add_css(drupal_get_path('module', 'thsc_modules') . '/thsc.css');
+}
+
+/**
+ * Returns TRUE if the current user is a parent and not THSC staff of any form
+ */
+function thsc_module_is_parent() {
+  $user = $GLOBALS['user'];
+  if ($user && ($user->uid > 0)) {
+    return (!in_array('THSC Manager', $user->roles) && !in_array('THSC Staff', $user->roles) && !user_access('administer thsc_player'));
+  }
+  else {
+    return FALSE;
+  }
+}

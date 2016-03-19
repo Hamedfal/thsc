@@ -1,0 +1,56 @@
+@CHARSET "UTF-8";
+
+/*
+.schedule-practice-row {
+	font-style: italic;
+}
+
+.schedule-type-cell {
+	font-size: x-small;
+}
+
+.schedule-nexttime-cell {
+	background-color: #DFE593;
+}
+
+#mychildren-payment-section {
+	margin-top: 20px;
+	float: left;
+}
+
+div.edit-profile-address {
+	border: 1px solid;
+}
+*/
+
+.thsc-block-title{
+  background:#054b81;
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0.0, #ca1818),color-stop(0.4, #8c0000));
+  background: -moz-linear-gradient(top center,#ca1818,#8c0000 40%);
+  padding: 5px 10px 5px 0px;
+}
+
+.thsc-title, .pane-title{
+  font-size: 1em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color:white;
+  border: none;
+  background: url(/sites/all/themes/marinelli/img/icons/soccerball.png) no-repeat top right;
+  margin-bottom: 0px;
+  margin-left: 10px;
+}
+
+.thsc-block-content{
+  background: #eee;
+  border-left:1px solid #e2e2e2;
+  border-right:1px solid #e2e2e2;
+  border-bottom:1px solid #e2e2e2;
+  padding: 10px;
+}
+
+.thsc-button {
+  text-decoration: none;
+  color:#fff;
+  background: #054b81;
+}

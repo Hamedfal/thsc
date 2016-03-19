@@ -1,0 +1,74 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_group
+ */
+function thsc_group_schema() {
+  $schema = array();
+
+  $schema['thsc_group'] = array(
+    'description' => 'The database table for THSC age groups',
+    'fields' => array(
+      'group_id' => array(
+        'description' => 'Primary key.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'bundle_type' => array(
+        'description' => 'THSC Group Bundle Type',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => 'thsc_group',
+      ),
+      'group_name' => array(
+        'description' => 'Name of this group',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'gender_type' => array(
+        'description' => 'The type of this group, B, G, or C for Girls, Boys or Co-Eds',
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => 'B',
+      ),
+      'start_age' => array(
+        'description' => 'The starting age for this group',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'end_age' => array(
+        'description' => 'The ending age for this group',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('group_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * At uninstall time we'll notify field.module that the entity was deleted
+ * so that attached fields can be cleaned up.
+ *
+ * @ingroup entity_example
+ */
+function thsc_group_uninstall() {
+  field_attach_delete_bundle('thsc_group', 'thsc_group');
+}
+

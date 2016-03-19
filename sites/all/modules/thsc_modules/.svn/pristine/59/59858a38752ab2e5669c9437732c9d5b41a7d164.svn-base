@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * @file
+ * THSC Game module
+ */
+function thsc_game_permission() {
+  return array(
+    'administer thsc_game' => array(
+      'title' => t('Administer Games'),
+      'description' => 'Manage Games'
+    ),
+    'edit thsc_game' => array(
+      'title' => 'Enter Game Result',
+      'description' => 'Permits entering game results or change the date, but will not be able to change the teams'
+    ),
+    'view thsc_game' => array(
+      'title' => 'Monitor Games',
+      'description' => 'View list of games and their details'
+    )
+  );
+}
+
+function thsc_game_menu() {
+  $items['thsc_games'] = array(
+    'title' => 'View Games',
+    'page callback' => 'thsc_game_list',
+    'access arguments' => array(
+      'view thsc_game'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+function thsc_game_list() {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    return "There is no ACTIVE season at this moment!";
+  }
+  $query = db_select('thsc_game', 'g')->condition('g.season_id', $current_seasonid, '=')->join('thsc_team', 't', 'g.team_id = t.team_id')->join('thsc_group', 'r', 't.group_id = r.group_id')->join('node', 'n', 'g.location_nid = n.nid')->fields('g', array(
+    'game_id',
+    'row_id',
+    'season_id',
+    'team_id',
+    'game_time',
+    'score_gf',
+    'score_ga',
+    'event_id',
+    'game_time',
+    'location_nid'
+  ))->fields('t', array(
+    'team_name',
+    'group_id'
+  ))->fields('r', array(
+    'group_name'
+  ))->fields('n', array(
+    'title'
+  ))->orderBy('r.group_id')->orderBy('g.game_time')->orderBy('g.row_id');
+
+  $content = array();
+  $result = $query->execute();
+  $games = array();
+  //first build the array of games. each set of records (2 records) go into one game item
+  foreach ($result as $rec) {
+    if ($rec->row_id == 1) {
+      $games[$rec->game_id]['game_time'] = $rec->game_time;
+      $games[$rec->game_id]['location_nid'] = $rec->location_nid;
+      $games[$rec->game_id]['group_id'] = $rec->group_id;
+      $games[$rec->game_id]['group_name'] = $rec->group_name;
+      $games[$rec->game_id]['team_a_id'] = $rec->team_id;
+      $games[$rec->game_id]['team_a_name'] = $rec->team_name;
+      $games[$rec->game_id]['location'] = $rec->title;
+    }
+    elseif ($rec->row_id == 2) {
+      $games[$rec->game_id]['team_b_id'] = $rec->team_id;
+      $games[$rec->game_id]['team_b_name'] = $rec->team_name;
+    }
+  }
+  //now build the output from games array
+  foreach ($games as $game) {
+    //....
+  }
+  return $content;
+}
+

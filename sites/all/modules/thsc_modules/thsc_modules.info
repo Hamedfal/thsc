@@ -1,0 +1,4 @@
+name = THSC Modules
+description = A set of modules for THSC Soccer Club
+package = THSC modules
+core = 7.x

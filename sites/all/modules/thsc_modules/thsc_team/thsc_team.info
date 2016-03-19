@@ -1,0 +1,11 @@
+name = THSC Team Entity
+description = An entity for THSC Teams
+core = 7.x
+package = THSC modules
+dependencies[] = field
+dependencies[] = date
+dependencies[] = date_api
+dependencies[] = thsc_player
+dependencies[] = thsc_activeplayer
+dependencies[] = thsc_group
+files[] = thsc_team.controller.inc

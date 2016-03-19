@@ -1,0 +1,96 @@
+<?php
+
+include_once 'thsc_practice.utils.inc';
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_practice
+ */
+function thsc_practice_schema() {
+  $schema = array();
+
+  $schema['thsc_practice'] = array(
+    'description' => 'The database table to keep Practice information for THSC.',
+    'fields' => array(
+      'season_id' => array(
+        'description' => 'Node id of the Season that this Practice is related to',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'nid' => array(
+        'description' => 'Node Id of Practice Content Type.',
+        'type' => 'int',
+        'not null' => TRUE
+      ),
+      'team_id' => array(
+        'description' => 'Map to thsc_team entity',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
+      ),
+    ),
+    'primary key' => array(
+      'season_id',
+      'nid',
+    ),
+    'indexes' => array(
+      'team_ids' => array(
+        'season_id',
+        'team_id'
+      )
+    )
+  );
+
+  return $schema;
+}
+
+function thsc_practice_install() {
+  node_types_rebuild();
+  foreach (_thsc_practice_installed_fields() as $field) {
+    field_create_field($field);
+  }
+  foreach (_thsc_practice_installed_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'thsc_practice';
+    field_create_instance($instance);
+  }
+
+  variable_set('comment_thsc_practice', COMMENT_NODE_HIDDEN);
+
+}
+
+function thsc_practice_uninstall() {
+  $name = 'thsc_practice';
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(
+    ':type' => $name
+  ));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+  node_delete_multiple($nids);
+
+  variable_del('additional_settings__active_tab_' . $name);
+  variable_del('node_preview_' . $name);
+  variable_del('node_options_' . $name);
+  variable_del('node_submitted_' . $name);
+  variable_del('menu_options_' . $name);
+  variable_del('menu_parent_' . $name);
+  variable_del('comment_' . $name);
+  // find all fields and delete them
+  foreach (array_keys(_thsc_practice_installed_fields()) as $field) {
+    field_delete_field($field);
+  }
+  // find all fields and delete instance
+  $instances = field_info_instances('node', $name);
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
+  // delete our content type
+  node_type_delete($name);
+  // purge all field infromation
+  field_purge_batch(1000);
+}

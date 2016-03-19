@@ -1,0 +1,9 @@
+name = THSC Player Entity
+description = An entity to hold THSC player's fix information
+core = 7.x
+package = THSC modules
+dependencies[] = field
+dependencies[] = date
+dependencies[] = date_api
+files[] = thsc_player.controller.inc
+configure = admin/structure/thsc_player/manage

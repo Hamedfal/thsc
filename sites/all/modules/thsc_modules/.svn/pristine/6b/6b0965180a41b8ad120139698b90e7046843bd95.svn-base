@@ -1,0 +1,10 @@
+name = THSC Group Entity
+description = An entity for THSC Age Groups
+core = 7.x
+package = THSC modules
+dependencies[] = field
+dependencies[] = date
+dependencies[] = date_api
+dependencies[] = thsc_player
+dependencies[] = thsc_activeplayer
+files[] = thsc_group.controller.inc

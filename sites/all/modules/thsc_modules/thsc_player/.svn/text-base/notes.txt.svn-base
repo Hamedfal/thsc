@@ -1,0 +1,3 @@
+; debug in browser:
+
+  drupal_set_message('<pre>'. print_r($form_state['values'], TRUE) .'</pre>');

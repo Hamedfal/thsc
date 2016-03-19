@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * This file serves as a stub file for the thsc modules
+ *
+ */
+
+function thsc_modules_help($path, $arg) {
+  // re: http://drupal.org/node/767204
+  // 5. We need a master group (thsc_modules) that will be in a main
+  // thsc_modules.module.
+}
+

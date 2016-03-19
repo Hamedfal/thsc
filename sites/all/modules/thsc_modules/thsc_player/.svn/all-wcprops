@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/thsc-d7/!svn/ver/44/trunk/thsc_player
+END
+thsc_player.module
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/thsc-d7/!svn/ver/44/trunk/thsc_player/thsc_player.module
+END
+thsc_player.install
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/thsc-d7/!svn/ver/5/trunk/thsc_player/thsc_player.install
+END
+notes.txt
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/thsc-d7/!svn/ver/5/trunk/thsc_player/notes.txt
+END
+thsc_player.controller.inc
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/thsc-d7/!svn/ver/5/trunk/thsc_player/thsc_player.controller.inc
+END
+thsc_player.info
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/thsc-d7/!svn/ver/5/trunk/thsc_player/thsc_player.info
+END

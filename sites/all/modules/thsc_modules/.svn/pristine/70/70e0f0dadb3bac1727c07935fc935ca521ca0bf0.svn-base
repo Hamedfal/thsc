@@ -1,0 +1,13 @@
+name = THSC Game Modile
+description = Manages THSC Games
+core = 7.x
+package = THSC modules
+dependencies[] = field
+dependencies[] = date
+dependencies[] = date_api
+dependencies[] = calendar
+dependencies[] = event_calendar
+dependencies[] = thsc_player
+dependencies[] = thsc_activeplayer
+dependencies[] = thsc_group
+dependencies[] = thsc_team

@@ -1,0 +1,362 @@
+<?php
+
+/**
+ * @file
+ * THSC Game module
+ */
+function thsc_game_node_info() {
+  return array(
+    'thsc_game' => array(
+      'name' => 'Game',
+      'base' => 'thsc_game',
+      'description' => 'Game Content Type for THSC',
+      'has_title' => TRUE,
+      'title_label' => 'Game',
+      'locked' => TRUE
+    )
+  );
+}
+
+function thsc_game_form($node, $form_state) {
+  $form = node_content_form($node, $form_state);
+
+  $form['title']['#required'] = FALSE;
+  if (empty($form['title']['#default_value'])) {
+    $form['title']['#default_value'] = '-';
+  }
+  $form['title']['#access'] = FALSE;
+
+  $options = array();
+  $groups = thsc_group_load_multiple();
+  foreach ($groups as $group) {
+    $options[$group->group_id] = $group->group_name;
+  }
+  if (!isset($form_state['values'])) {
+    $selected_group_id = !empty($node->group_id) ? $node->group_id : NULL;
+  }
+  else {
+    $selected_group_id = isset($form_state['values']['group_id']) ? $form_state['values']['group_id'] : NULL;
+  }
+
+  $form['group_id'] = array(
+    '#type' => 'select',
+    '#title' => 'Please select a group',
+    '#options' => $options,
+    '#required' => TRUE,
+    '#default_value' => $selected_group_id,
+    '#ajax' => array(
+      'wrapper' => 'game-teams-div',
+      'callback' => 'thsc_game_form_group_callback'
+    ),
+    '#weight' => -20
+  );
+
+  $form['teams'] = array(
+    '#type' => 'fieldset',
+    '#prefix' => '<div id="game-teams-div">',
+    '#suffix' => '</div>',
+    '#tree' => 1,
+    '#weight' => -15
+  );
+  if (!empty($selected_group_id)) {
+    $team_options = _thsc_game_group_teams_options($selected_group_id);
+    $form['teams']['0']['team_id'] = array(
+      '#type' => 'select',
+      '#title' => 'Home Team',
+      '#options' => $team_options,
+      '#required' => TRUE,
+      '#default_value' => isset($node->teams[0]['team_id']) ? $node->teams[0]['team_id'] : NULL
+    );
+    $form['teams']['1']['team_id'] = array(
+      '#type' => 'select',
+      '#title' => 'Away Team',
+      '#options' => $team_options,
+      '#required' => TRUE,
+      '#default_value' => isset($node->teams[1]['team_id']) ? $node->teams[1]['team_id'] : NULL
+    );
+  }
+
+  return $form;
+}
+
+function thsc_game_form_group_callback($form, $form_state) {
+  return $form['teams'];
+}
+
+function thsc_game_validate($node, $form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (!$current_seasonid) {
+    form_set_error('group_id', 'There is no ACTIVE SEASON at this moment!');
+  }
+  if ($form_state['values']['teams'][0]['team_id'] == $form_state['values']['teams'][1]['team_id']) {
+    form_set_error('team_id_2', 'You cannot selec the same team in both ends!');
+  }
+  // @todo check score for both rows if they have been entered (both must be entered or none must have value)
+}
+
+function thsc_game_node_submit($node, $form, &$form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if (empty($node->teams[0]['row_id'])) {
+    $node->teams[0]['season_id'] = $current_seasonid;
+    $node->teams[1]['season_id'] = $current_seasonid;
+    $node->teams[0]['nid'] = $node->nid;
+    $node->teams[1]['nid'] = $node->nid;
+    $node->teams[0]['row_id'] = 1;
+    $node->teams[1]['row_id'] = 2;
+  }
+  if (empty($node->teams[0]['score'])) {
+    $node->teams[0]['score'] = NULL;
+    $node->teams[1]['score'] = NULL;
+    $node->teams[0]['wtd'] = NULL;
+    $node->teams[1]['wtd'] = NULL;
+    $node->teams[0]['points'] = NULL;
+    $node->teams[1]['points'] = NULL;
+  }
+  else if (is_int($node->teams[0]['score'])) {
+    if ($node->teams[0]['score'] > $node->teams[1]['score']) {
+      $node->teams[0]['wtd'] = 1; // Win
+      $node->teams[1]['wtd'] = -1; // Lose
+      $node->teams[0]['points'] = 3;
+      $node->teams[1]['points'] = 0;
+    }
+    else if ($node->teams[0]['score'] < $node->teams[1]['score']) {
+      $node->teams[0]['wtd'] = -1; // Lose
+      $node->teams[1]['wtd'] = 1; // Win
+      $node->teams[0]['points'] = 0;
+      $node->teams[1]['points'] = 3;
+    }
+    else {
+      $node->teams[0]['wtd'] = 0; // Draw
+      $node->teams[1]['wtd'] = 0; // Draw
+      $node->teams[0]['points'] = 1;
+      $node->teams[1]['points'] = 1;
+    }
+  }
+}
+
+function thsc_game_node_presave($node) {
+  if (empty($node->teams[0]['team_name'])) {
+    $team_a = thsc_team_load($node->teams[0]['team_id']);
+    if (!empty($team_a)) {
+      $team_a_name = $team_a->team_name;
+    }
+    else {
+      $team_a_name = '';
+    }
+  }
+  else {
+    $team_a_name = $node->teams[0]['team_name'];
+  }
+  if (empty($node->teams[1]['team_name'])) {
+    $team_b = thsc_team_load($node->teams[1]['team_id']);
+    if (!empty($team_b)) {
+      $team_b_name = $team_b->team_name;
+    }
+    else {
+      $team_b_name = '';
+    }
+  }
+  else {
+    $team_b_name = $node->teams[1]['team_name'];
+  }
+  if (!empty($team_a_name) && !empty($team_b_name)) {
+    $node->title = $team_a_name . ' vs ' . $team_b_name;
+  }
+  else {
+    $node->title = '-';
+  }
+}
+
+function thsc_game_load($nodes) {
+  $rows = thsc_game_rows_load_multiple(array_keys($nodes));
+  foreach ($rows as $nid => $game) {
+    foreach ($game as $k => $v) {
+      $nodes[$nid]->$k = $v;
+    }
+  }
+}
+
+function thsc_game_insert($node) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if ((empty($node->teams)) || (!is_array($node->teams)) || (count($node->teams) < 2)) {
+    return; // there isn't valid data for game rows
+  }
+  db_insert('thsc_game')->fields(array(
+    'season_id' => $current_seasonid,
+    'nid' => $node->nid,
+    'row_id' => 1,
+    'team_id' => $node->teams[0]['team_id'],
+    'score' => $node->teams[0]['score'],
+    'wtd' => $node->teams[0]['wtd'],
+    'points' => $node->teams[0]['points']
+  ))->execute();
+  db_insert('thsc_game')->fields(array(
+    'season_id' => $current_seasonid,
+    'nid' => $node->nid,
+    'row_id' => 2,
+    'team_id' => $node->teams[1]['team_id'],
+    'score' => $node->teams[1]['score'],
+    'wtd' => $node->teams[1]['wtd'],
+    'points' => $node->teams[1]['points']
+  ))->execute();
+}
+
+function thsc_game_update($node) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $game = db_query('SELECT COUNT(*) AS Cnt FROM {thsc_game} WHERE season_id = :season_id AND nid = :nid', array(
+    ':season_id' => $current_seasonid,
+    ':nid' => $node->nid
+  ));
+  if ((!$game) || ($game->fetchObject()->Cnt == 0)) {
+    thsc_game_insert($node);
+  }
+  else {
+    $current_seasonid = variable_get('thsc_active_season', 0);
+    db_update('thsc_game')->fields(array(
+      'team_id' => $node->teams[0]['team_id'],
+      'score' => $node->teams[0]['score'],
+      'wtd' => $node->teams[0]['wtd'],
+      'points' => $node->teams[0]['points']
+    ))->condition('season_id', $current_seasonid, '=')->condition('nid', $node->nid, '=')->condition('row_id', 1, '=')->execute();
+    db_update('thsc_game')->fields(array(
+      'team_id' => $node->teams[1]['team_id'],
+      'score' => $node->teams[1]['score'],
+      'wtd' => $node->teams[1]['wtd'],
+      'points' => $node->teams[1]['points']
+    ))->condition('season_id', $current_seasonid, '=')->condition('nid', $node->nid, '=')->condition('row_id', 2, '=')->execute();
+  }
+}
+
+function thsc_game_delete($node) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  db_delete('thsc_game')->condition('nid', $node->nid, '=')->condition('season_id', $current_seasonid, '=')->execute();
+}
+
+function thsc_game_prepare($node) {
+  if (!isset($node->group_id)) {
+    $node->group_id = 0;
+  }
+  if (!isset($node->group_name)) {
+    $node->group_name = '';
+  }
+  if (!isset($node->teams)) {
+    $node->teams = array();
+    for($i = 0; $i < 2; $i++) {
+      $node->teams[$i] = array(
+        'nid' => 0,
+        'team_id' => 0,
+        'team_name' => '',
+        'score' => '',
+        'wtd' => '',
+        'points' => ''
+      );
+    }
+  }
+}
+
+/**
+ * Returns an array with teams and group information
+ * teams member has two rows, each row related to one record of thsc_game table
+ * group_id and group_name would be the other members of the returned array.
+ * [teams]
+ * ....[0] => row 2
+ * ....[1] => row 2
+ * [group_id]
+ * [group_name]
+ *
+ * @param unknown $nid
+ */
+function thsc_game_rows_load($nid) {
+  $query = _thsc_game_select_query();
+  $query->condition('g.nid', $nid, '=');
+  $result = $query->execute();
+  $out = array();
+  $teams = array();
+  foreach ($result as $rec) {
+    $team = thsc_team_load($rec->team_id);
+    $k = $rec->row_id - 1;
+    $teams[$k] = array(
+      'nid' => $rec->nid,
+      'team_id' => $rec->team_id,
+      'team_name' => $team->team_name,
+      'score' => $rec->score,
+      'wtd' => $rec->wtd,
+      'points' => $rec->points
+    );
+    if (empty($out['group_id'])) {
+      $group = thsc_group_load($team->group_id);
+      $out['group_id'] = $group->group_id;
+      $out['group_name'] = $group->group_name;
+    }
+  }
+  $out['teams'] = $teams;
+  return $out;
+}
+
+/**
+ * Returns an array of arrays, keyed with nid, each item with same information as thsc_game_rows_load function.
+ *
+ * @param string $nids
+ */
+function thsc_game_rows_load_multiple($nids = NULL) {
+  $query = _thsc_game_select_query();
+  if (!empty($nids)) {
+    $query->condition('g.nid', $nids, 'IN');
+  }
+  $result = $query->execute();
+  $ret = array();
+  foreach ($result as $rec) {
+    $nid = $rec->nid;
+    if (!array_key_exists($nid, $ret)) {
+      $ret[$nid] = array(
+        'group_id' => 0,
+        'group_name' => '',
+        'teams' => array()
+      );
+    }
+    $team = thsc_team_load($rec->team_id);
+    $k = $rec->row_id - 1;
+    $ret[$nid]['teams'][$k] = array(
+      'nid' => $rec->nid,
+      'team_id' => $rec->team_id,
+      'team_name' => $team->team_name,
+      'score' => $rec->score,
+      'wtd' => $rec->wtd,
+      'points' => $rec->points
+    );
+    if ($ret[$nid]['group_id'] == 0) {
+      $group = thsc_group_load($team->group_id);
+      $ret[$nid]['group_id'] = $group->group_id;
+      $ret[$nid]['group_name'] = $group->group_name;
+    }
+  }
+  return $ret;
+}
+
+function _thsc_game_select_query() {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $query = db_select('thsc_game', 'g');
+  $query->condition('g.season_id', $current_seasonid, '=');
+  $query->fields('g', array(
+    'nid',
+    'row_id',
+    'team_id',
+    'score',
+    'wtd',
+    'points'
+  ));
+  $query->orderBy('g.nid')->orderBy('g.row_id');
+  return $query;
+}
+
+function _thsc_game_group_teams_options($group_id) {
+  $teams = thsc_team_load_multiple(FALSE, array(
+    'group_id' => $group_id
+  ));
+  $options = array();
+  foreach ($teams as $team) {
+    $options[$team->team_id] = $team->team_name;
+  }
+  return $options;
+}
+

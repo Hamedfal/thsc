@@ -1,0 +1,792 @@
+<?php
+
+/**
+ * @file
+ * THSC Group Entity module
+ */
+
+function thsc_group_entity_info() {
+  $info['thsc_group'] = array(
+    'label' => t('THSC Group Information'),
+    'controller class' => 'ThscGroupController',
+    'base table' => 'thsc_group',
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'thsc_group_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'group_id',
+      'bundle' => 'bundle_type'
+    ),
+    'bundle keys' => array(
+      'bundle' => 'bundle_type'
+    ),
+    'static cache' => FALSE,
+    'bundles' => array(
+      'thsc_group' => array(
+        'label' => 'Group Info',
+        'admin' => array(
+          'path' => 'admin/structure/thsc_group/manage',
+          'access arguments' => array(
+            'administer thsc_group'
+          )
+        )
+      )
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('THSC Group Information'),
+        'custom settings' => FALSE
+      )
+    )
+  );
+
+  return $info;
+}
+
+function thsc_group_permission() {
+  return array(
+    'administer thsc_group' => array(
+      'title' => t('Administer Groups')
+    )
+  );
+}
+
+function thsc_group_uri($group) {
+  return array(
+    'path' => 'thsc_group/' . $group->group_id
+  );
+}
+
+function thsc_group_load($group_id = NULL, $reset = FALSE) {
+  $group_ids = (isset($group_id) ? array(
+    $group_id
+  ) : FALSE);
+  $group = thsc_group_load_multiple($group_ids, $reset);
+  return $group ? reset($group) : FALSE;
+}
+
+function thsc_group_load_multiple($group_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('thsc_group', $group_ids, $conditions, $reset);
+}
+
+function thsc_group_menu() {
+  $items['thsc_group'] = array(
+    'title' => 'THSC Groups',
+    'page callback' => 'thsc_group_info',
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/structure/thsc_group/manage'] = array(
+    'title' => 'THSC Groups',
+    'description' => 'Manage THSC Groups Structure',
+    'page callback' => 'thsc_group_list_groups',
+    'access arguments' => array(
+      'administer thsc_group'
+    )
+  );
+
+  $items['admin/structure/thsc_group/manage/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_group/%thsc_group'] = array(
+    'title' => 'THSC Group',
+    'page callback' => 'thsc_group_view',
+    'page arguments' => array(
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_group/%thsc_group/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+
+  $items['thsc_group/%thsc_group/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_group_form',
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_LOCAL_TASK
+  );
+
+  $items['thsc_group/add'] = array(
+    'title' => 'Add THSC Group',
+    'page callback' => 'thsc_group_add',
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+  );
+
+  $items['thsc_group/autoassign'] = array(
+    'title' => 'Auto Assign Into Groups',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_group_autoassign_players'
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['thsc_group/%thsc_group/manage/players'] = array(
+    'title callback' => 'thsc_group_manage_players_title',
+    'title arguments' => array(
+      1
+    ),
+    'page callback' => 'thsc_group_manage_players',
+    'page arguments' => array(
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_group/%thsc_group/manage/teams'] = array(
+    'title' => 'THSC Teams',
+    'page callback' => 'thsc_group_manage_teams',
+    'page arguments' => array(
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_group/%thsc_group/manage/removeapid/%thsc_activeplayer'] = array(
+    'title' => 'Confirm Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_group_removeapid_confirm_form',
+      1,
+      4
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  $items['thsc_group/%thsc_group/manage/addplayer'] = array(
+    'title' => 'Add Player To Group',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'thsc_group_addplayer_form',
+      1
+    ),
+    'access arguments' => array(
+      'administer thsc_group'
+    ),
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+function thsc_group_info() {
+  return ('Welcome to the administration page for THSC Groups!');
+}
+
+function thsc_group_list_groups() {
+  $groups = thsc_group_load_multiple();
+  if (!empty($groups)) {
+    foreach ($groups as $group) {
+      $rows[] = array(
+        'data' => array(
+          'group_name' => l($group->group_name, 'thsc_group/' . $group->group_id),
+          'gender_type' => thsc_group_gender_type_string($group->gender_type),
+          'start_age' => $group->start_age,
+          'end_age' => $group->end_age
+        )
+      );
+    }
+    $content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(
+        'Group Name',
+        'Gender',
+        array(
+          'data' => 'Start Age',
+          'sort' => 'asc',
+        ),
+        'End Age'
+      )
+    );
+  }
+  else {
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No THSC Group currently exist!')
+    );
+  }
+
+  return $content;
+}
+
+function thsc_group_view($group, $view_mode = 'full') {
+  $entity_type = 'thsc_group';
+  $group->content = array();
+
+  field_attach_prepare_view($entity_type, array(
+    $group->group_id => $group
+  ), $view_mode);
+  entity_prepare_view($entity_type, array(
+    $group->group_id => $group
+  ));
+  $group->content += field_attach_view($entity_type, $group, $view_mode);
+
+  $group->content['group_name'] = array(
+    '#type' => 'item',
+    '#title' => t('Group Name'),
+    '#markup' => $group->group_name,
+    '#weight' => -10
+  );
+  $group->content['gender_type'] = array(
+    '#type' => 'item',
+    '#title' => t('Gender Type'),
+    '#markup' => thsc_group_gender_type_string($group->gender_type),
+    '#weight' => -8
+  );
+  $group->content['start_age'] = array(
+    '#type' => 'item',
+    '#title' => t('Start Age'),
+    '#markup' => $group->start_age,
+    '#weight' => -6
+  );
+  $group->content['end_age'] = array(
+    '#type' => 'item',
+    '#title' => t('End Age'),
+    '#markup' => $group->end_age,
+    '#weight' => -4
+  );
+  $group->content['manage_players'] = array(
+    '#type' => 'item',
+    '#title' => '',
+    '#markup' => l('Manage Players', 'thsc_group/' . $group->group_id . '/manage/players')
+  );
+  $group->content['manage_teams'] = array(
+    '#type' => 'item',
+    '#title' => '',
+    '#markup' => l('Manage Teams', 'thsc_group/' . $group->group_id . '/manage/teams')
+  );
+  global $language;
+  $langcode = $language->language;
+  module_invoke_all('entity_view', $group, $entity_type, $view_mode, $langcode);
+  drupal_alter(array(
+    'thsc_group_view',
+    'entity_view'
+  ), $group->content, $entity_type);
+
+  return $group->content;
+}
+
+function thsc_group_field_extra_fields() {
+  $return = array();
+  $return['thsc_group']['thsc_group'] = array(
+    'form' => array(
+      'group_name' => array(
+        'label' => 'Group Name',
+        'weight' => -10
+      ),
+      'gender_type' => array(
+        'label' => 'Gender Type',
+        'weight' => -8
+      ),
+      'start_date' => array(
+        'label' => 'Start Date',
+        'weight' => -6
+      ),
+      'end_date' => array(
+        'label' => 'End Date',
+        'weight' => -5
+      )
+    )
+  );
+
+  return $return;
+}
+
+function thsc_group_form($form, &$form_state, $group) {
+  $form['group_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Group Name',
+    '#required' => TRUE,
+    '#default_value' => $group->group_name,
+    '#weight' => -8
+  );
+  $form['gender_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Gender Type',
+    '#required' => TRUE,
+    '#options' => array(
+      'B' => 'Boys',
+      'G' => 'Girls',
+      'C' => 'Co-Eds'
+    ),
+    '#default_value' => $group->gender_type,
+    '#weight' => -10
+  );
+  $form['start_age'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Start Age',
+    '#required' => TRUE,
+    '#default_value' => $group->start_age,
+    '#weight' => -6
+  );
+  $form['end_age'] = array(
+    '#type' => 'textfield',
+    '#title' => 'End Age',
+    '#required' => TRUE,
+    '#default_value' => $group->end_age,
+    '#weight' => -5
+  );
+  $form['group'] = array(
+    '#type' => 'value',
+    '#value' => $group
+  );
+
+  field_attach_form('thsc_group', $group, $form, $form_state);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100
+  );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+    '#submit' => array(
+      'thsc_group_form_delete'
+    ),
+    '#weight' => 120
+  );
+
+  return $form;
+}
+
+function thsc_group_form_validate($form, &$form_state) {
+  field_attach_form_validate('thsc_group', $form_state['values']['group'], $form, $form_state);
+  // @todo if this is for delete action, we need to check and make sure this group has no team or player as member!
+}
+
+function thsc_group_form_submit($form, &$form_state) {
+  $group = $form_state['values']['group'];
+  $group->group_name = $form_state['values']['group_name'];
+  $group->gender_type = $form_state['values']['gender_type'];
+  $group->start_age = $form_state['values']['start_age'];
+  $group->end_age = $form_state['values']['end_age'];
+  field_attach_submit('thsc_group', $group, $form, $form_state);
+  $group = entity_get_controller('thsc_group')->save($group);
+  $form_state['redirect'] = "thsc_group/$group->group_id";
+}
+
+function thsc_group_form_delete($form, &$form_state) {
+  $group = $form_state['values']['group'];
+  entity_get_controller('thsc_group')->delete($group);
+  drupal_set_message(t('The Group %group_name (ID %id) has been deleted', array(
+    '%group_name' => $group->group_name,
+    '%id' => $group->group_id
+  )));
+  $form_state['redirect'] = '';
+}
+
+function thsc_group_removeapid_confirm_form($form, &$form_state, $group, $activeplayer) {
+  $form['confirm_message'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Are you sure you want to remove this player from group ' . $group->group_name . '?'
+  );
+
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => 'Delete',
+    '#weight' => 100
+  );
+
+  $form['group_id'] = array(
+    '#type' => 'value',
+    '#value' => $group->group_id
+  );
+  $form['activeplayer'] = array(
+    '#type' => 'value',
+    '#value' => $activeplayer
+  );
+
+  return $form;
+}
+
+function thsc_group_removeapid_confirm_form_submit($form, &$form_state) {
+  $group_id = $form_state['values']['group_id'];
+  $activeplayer = $form_state['values']['activeplayer'];
+  $query = db_update('thsc_activeplayer');
+  $query->fields(array(
+    'group_id' => 0
+  ))->condition('apid', $activeplayer->apid)->execute();
+
+  drupal_set_message('Player was successfully removed from this group.');
+  $form_state['redirect'] = 'thsc_group/' . $group_id . '/manage/players';
+}
+
+function thsc_group_addplayer_form($form, &$form_state, $group) {
+  $form['group_name'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Add Player to Group: ' . $group->group_name,
+    '#weight' => -20
+  );
+
+  $form['apid'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Registered Player',
+    '#size' => 64,
+    '#autocomplete_path' => 'thsc_activeplayer/autocomplete/all',
+    '#default_value' => '',
+    '#weight' => -10
+  );
+
+  $form['group'] = array(
+    '#type' => 'value',
+    '#value' => $group
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit'
+  );
+
+  return $form;
+}
+
+function thsc_group_addplayer_form_submit($form, &$form_state) {
+  $apid = $form_state['values']['apid'];
+  $group = $form_state['values']['group'];
+  if ($apid) {
+    db_query('UPDATE {thsc_activeplayer} SET group_id = :group_id WHERE apid = :apid', array(
+      ':group_id' => $group->group_id,
+      ':apid' => $apid
+    ));
+    drupal_set_message('Player was added to the group.');
+  }
+  $form_state['redirect'] = 'thsc_group/' . $group->group_id . '/manage/players';
+}
+
+function thsc_group_autoassign_players($form, &$form_state) {
+  $form['group_autoassign'] = array(
+    '#type' => 'markup',
+    '#markup' => 'This process will assign all UNGROUPED players into appropriate groups based on age and gender.'
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Start'
+  );
+
+  return $form;
+}
+
+function thsc_group_autoassign_players_submit($form, $form_state) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  if ($current_seasonid) {
+    $activeplayers = thsc_activeplayer_load_multiple(FALSE, array(
+      'season_id' => $current_seasonid
+    ));
+    // Load all groups into an array:
+    $groups = thsc_group_load_multiple();
+    $notfound_players = array();
+    $found_players = array();
+    foreach ($activeplayers as $activeplayer) {
+      if ($activeplayer->group_id == 0) {
+        $player = thsc_player_load($activeplayer->player_id);
+        $age = thsc_player_calculate_age($player->birthdate);
+        // search for appropriate group:
+        foreach ($groups as $group) {
+          if (($group->start_age <= $age) && ($age <= $group->end_age) && thsc_group_match_gender2group($group->gender_type, $player->gender)) {
+            db_query('UPDATE {thsc_activeplayer} SET group_id = :group_id WHERE apid = :apid', array(
+              ':group_id' => $group->group_id,
+              ':apid' => $activeplayer->apid,
+            ));
+            $activeplayer->group_id = $group->group_id;
+            $found_players[] = $player->first_name . ' ' . $player->last_name . ' assigned to ' . $group->group_name;
+            break;
+          }
+        }
+        // if the group_id is still zero, it means that we have not found an appropriate group
+        if ($activeplayer->group_id == 0) {
+          $notfound_players[] = $player->first_name . ' ' . $player->last_name;
+        }
+      }
+    }
+    if (!empty($notfound_players)) {
+      drupal_set_message('These players could not be matched to any group!', 'warning');
+      foreach ($notfound_players as $p) {
+        drupal_set_message($p, 'warning');
+      }
+    }
+    if (!empty($found_players)) {
+      drupal_set_message('The following players were assigned to a group');
+      foreach ($found_players as $p) {
+        drupal_set_message($p);
+      }
+    }
+  }
+  $form_state['redirect'] = 'admin/structure/thsc_activeplayer/manage';
+}
+
+function thsc_group_add() {
+  $group = entity_get_controller('thsc_group')->create();
+  return drupal_get_form('thsc_group_form', $group);
+}
+
+function thsc_group_manage_players_title($group) {
+  return $group->group_name . ' Players';
+}
+
+function thsc_group_manage_players($group) {
+  $current_seasonid = variable_get('thsc_active_season', 0);
+  $use_datatables = module_exists('datatables');
+  $group->content = array();
+  // load players related to this group using dbselect and join
+  $query = db_select('thsc_activeplayer', 'ap');
+  $query->condition('ap.bundle_type', 'thsc_activeplayer', '=');
+  $query->condition('ap.group_id', $group->group_id, '=');
+  $query->condition('ap.season_id', $current_seasonid, '=');
+  $query->join('thsc_player', 'p', 'ap.player_id = p.player_id');
+  $query->fields('p', array(
+    'first_name',
+    'last_name',
+    'gender',
+    'birthdate'
+  ));
+  $query->fields('ap', array(
+    'apid',
+    'player_id',
+    'team_id'
+  ));
+  $players = $query->execute();
+  $rows = array();
+  foreach ($players as $player) {
+    $row_data = array(
+      'data' => array(
+        'player_name' => l($player->first_name . ' ' . $player->last_name, 'thsc_player/' . $player->player_id),
+        'age' => thsc_player_calculate_age($player->birthdate),
+        'gender' => ($player->gender == 'M' ? 'Boy' : 'Girl'),
+        'team' => '--',
+        'remove_link' => l('Remove From Group', 'thsc_group/' . $group->group_id . '/manage/removeapid/' . $player->apid)
+      )
+    );
+    if ($use_datatables) {
+      $rows[] = $row_data;
+    }
+    else {
+      $rows[] = array(
+        'data' => $row_data
+      );
+    }
+  }
+  $group->content['add_link'] = array(
+    '#type' => 'markup',
+    '#markup' => l('Add Player to This Group', 'thsc_group/' . $group->group_id . '/manage/addplayer')
+  );
+  if ($use_datatables) {
+    $header = array(
+      array(
+        'data' => 'Player Name',
+        'datatable_options' => array(
+          'bSortable' => TRUE,
+          'bSearchable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Age',
+        'datatable_options' => array(
+          'bSortable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Gender',
+        'datatable_options' => array(
+          'bSortable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Team',
+        'datatable_options' => array(
+          'bSortable' => TRUE
+        )
+      ),
+      array(
+        'data' => 'Action',
+        'datatable_options' => array(
+          'bSortable' => FALSE
+        )
+      ),
+    );
+
+    $attributes['datatable_options'] = array(
+      'bFilter' => TRUE,
+      'bInfo' => TRUE,
+      'bSort' => TRUE,
+      'bJQueryUI' => TRUE,
+    );
+
+    $group->content['entity_datatable'] = array(
+      '#theme' => 'datatable',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#attributes' => $attributes
+    );
+  }
+  else {
+    $group->content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(
+        array(
+      	  'data' => 'Player Name',
+          'sort' => 'asc',
+        ),
+        'Age',
+        'Gender',
+        'Team',
+        'Actions'
+      )
+    );
+  }
+  return $group->content;
+}
+
+function thsc_group_manage_teams($group) {
+  $group->content = array();
+  $group->content['group_info'] = array(
+    '#type' => 'item',
+    '#title' => t('Teams Of Group'),
+    '#markup' => $group->group_name,
+    '#weight' => -10
+  );
+  $query = db_select('thsc_team', 't');
+  $query->condition('t.bundle_type', 'thsc_team', '=');
+  $query->condition('t.group_id', $group->group_id, '=');
+  $query->fields('t', array(
+    'team_name',
+    'team_id'
+  ));
+  $teams = $query->execute();
+  $rows = array();
+  foreach ($teams as $team) {
+    $rows[] = array(
+    	'data' => array(
+    	  'team_name' => l($team->team_name, 'thsc_team/' . $team->team_id),
+    	),
+    );
+  }
+  $group->content['add_link'] = array(
+    '#type' => 'markup',
+    '#markup' => l('Add Team', 'thsc_team/add'),
+    '#weight' => 1,
+  );
+  $group->content['entity_table'] = array(
+  	'#theme' => 'table',
+    '#rows' => $rows,
+    '#header' => array(
+      array(
+        'data' => 'Team Name',
+        'sort' => 'asc',
+      ),
+    ),
+    '#weight' => 5,
+  );
+  return $group->content;
+}
+
+/**
+ * Returns a string related to gender_type passed.
+ *
+ * @param int $gender_type
+ *          'Boys' for 'B', 'Girls' for 'G' and 'Co-Ed' for 'C'
+ */
+function thsc_group_gender_type_string($gender_type) {
+  switch ($gender_type) {
+    case 'B' :
+      return 'Boys';
+    case 'G' :
+      return 'Girls';
+    case 'C' :
+      return 'Co-Ed';
+  }
+  return ''; // unknown
+}
+
+/**
+ * Returns True if gender type and gender match
+ *
+ * @param string $group_type
+ * @param string $gender
+ */
+function thsc_group_match_gender2group($group_type, $gender) {
+  switch ($group_type) {
+    case 'B' :
+      return ($gender == 'M');
+    case 'G' :
+      return ($gender == 'F');
+    default : // 'C' for Co-Ed
+      return TRUE;
+  }
+}
+
+/**
+ * Returns a group_id as default to show in different blocks/views.
+ * If a user is logged in, this function tries to find a group that
+ * one of user's children belongs to.
+ */
+function _thsc_group_get_default_group_id() {
+  $current_season_id = variable_get('thsc_registering_season_id', 0);
+  if ($current_season_id == 0) {
+    return 0;
+  }
+  $user = $GLOBALS['user'];
+  $parent_view = thsc_module_is_parent();
+  if ($parent_view) {
+    //this is a logged in parent, we try to find a random group of one of his/her children
+    $cmd = 'SELECT a.group_id FROM {field_data_field_parent} p ';
+    $cmd .= 'INNER JOIN {thsc_activeplayer} a ON p.entity_id = a.player_id ';
+    $cmd .= "WHERE p.entity_type = 'thsc_player' AND p.bundle = 'thsc_player' ";
+    $cmd .= 'AND p.field_parent_target_id = :userid ';
+    $cmd .= 'AND a.season_id = :season_id AND a.group_id > 0 LIMIT 1 ';
+    $result = db_query($cmd, array(
+    	':userid' => $user->uid,
+      ':season_id' => $current_season_id,
+    ));
+    if ($result) {
+      $rec = $result->fetchObject();
+      return $rec->group_id;
+    }
+  }
+  //this is either thsc staff, or anonymous user, or the query above return empty result
+  $cmd = 'SELECT a.group_id FROM {thsc_activeplayer} a ';
+  $cmd .= 'WHERE a.season_id = :season_id AND a.group_id > 0 LIMIT 1';
+  $result = db_query($cmd, array(
+  	':season_id' => $current_season_id,
+  ));
+  if ($result) {
+    $rec = $result->fetchObject();
+    return $rec->group_id;
+  }
+  //worst case, when there is no active season and no player setup in any group:
+  return 0;
+}

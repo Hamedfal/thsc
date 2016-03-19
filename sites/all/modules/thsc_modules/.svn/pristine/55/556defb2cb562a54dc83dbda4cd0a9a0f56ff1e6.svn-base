@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ *
+ * @ingroup thsc_game
+ */
+function thsc_game_schema() {
+  $schema = array();
+
+  $schema['thsc_game'] = array(
+    'description' => 'The database table to keep game information for THSC.',
+    'fields' => array(
+      'season_id' => array(
+        'description' => 'Node id of the Season that this game is related to',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'description' => 'Node Id of Game Content Type.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'row_id' => array(
+        'description' => 'Second part of primary key, values are 1 or 2 per game',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1
+      ),
+      'team_id' => array(
+        'description' => 'Map to thsc_team entity',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'score' => array(
+        'description' => 'Score Gole for this row of the game',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      ),
+      'wtd' => array(
+        'description' => 'Win=1, Lose=-1 or Draw=0',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+      ),
+      'points' => array(
+        'description' => 'Points this row of the game gets',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0
+      )
+    ),
+    'primary key' => array(
+      'season_id',
+      'nid',
+      'row_id',
+    ),
+    'indexes' => array(
+      'team_ids' => array(
+        'season_id',
+        'team_id',
+      ),
+    )
+  );
+
+  $schema['thsc_practice'] = array(
+    'description' => 'The database table to keep practice information for THSC teams.',
+    'fields' => array(
+      'season_id' => array(
+        'description' => 'Node id of the Season that this practice is related to',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'description' => 'Node Id of the Practice Content Type.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'team_id' => array(
+        'description' => 'Map to thsc_team entity',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0
+      ),
+    ),
+    'primary key' => array(
+      'season_id',
+      'nid',
+    ),
+    'indexes' => array(
+      'team_ids' => array(
+        'season_id',
+        'team_id',
+      ),
+    )
+  );
+
+  return $schema;
+}
+
+function thsc_game_enable() {
+  node_types_rebuild();
+}

@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Tests for the Viewport module.
+ */
+
+class ViewportPermissionsExist extends DrupalWebTestCase {
+
+  public function setUp() {
+    parent::setUp();
+  }
+
+  public function getInfo() {
+    return array(
+      'name' => 'Viewport module permissions.',
+      'description' => 'Just checks the required permissions exist.',
+      'group' => 'Viewport',
+    );
+  }
+
+  public function testPermissionsExist() {
+    $perms_defined = module_invoke('viewport', 'permission');
+
+    $this->assertTrue($perms_defined['administer viewport'], t('Administer permission exists'));
+  }
+
+}
