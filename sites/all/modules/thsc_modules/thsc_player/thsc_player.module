@@ -190,15 +190,24 @@ function thsc_player_menu() {
     'type' => MENU_CALLBACK
   );
   
-  $items['thsc/debug/%/%'] = array(
+  $items['thsc/users_without_child'] = array(
+    'title' => 'Users without child',
+    'page callback' => 'thsc_player_users_without_child',
+    'access arguments' => array(
+      'administer users',
+    ),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  $items['thsc/delete_nochild/%/%'] = array(
     'title' => 'Debugging THSC Modules',
-    'page callback' => 'thsc_debug',
+    'page callback' => 'thsc_player_delete_nochild',
     'page arguments' => array(
       2,
       3,
     ),
     'access arguments' => array(
-      'administer content types'
+      'administer users'
     ),
     'type' => MENU_CALLBACK
   );
@@ -1183,13 +1192,13 @@ function thsc_player_node_validate($node, $form, &$form_state) {
     }
   }
 }
-function thsc_debug($seconds_after_created, $how_many) {
+function thsc_player_delete_nochild($seconds_after_created, $how_many) {
   $query = db_select('users', 'u');
   $sec = intval($seconds_after_created);
   if (empty($sec)) {
     $sec = 300;
   }
-  $query->where('(u.login - u.created) < :seconds and (u.uid > 0)', array(':seconds' => $sec));
+  $query->where('((u.login - u.created) < :seconds or u.uid > 2800) and (u.uid > 0)', array(':seconds' => $sec));
   $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
   $query->fields('u', array(
     'uid',
@@ -1217,5 +1226,32 @@ function thsc_debug($seconds_after_created, $how_many) {
   }
   
   return array('#type' => 'markup', '#markup' => $x);
+}
+function  thsc_player_users_without_child() {
+  $query = db_select('users', 'u');
+  $query->where('(u.uid > 0)');
+  $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
+  $query->fields('u', array(
+      'uid',
+      'name',
+      'mail'
+  ));
+  $query->fields('p', array(
+      'field_parent_target_id'
+  ));
+  $query->where('p.field_parent_target_id IS NULL');
+  $result = $query->execute();
+  $rec = $result->fetchAssoc();
+  $header = array('User ID', 'Name', 'EMail', 'Action');
+  $rows = array();
+  while ($rec) {
+    $rows[] = array($rec['uid'],
+        l($rec['name'], 'user/'. $rec['uid']),
+        $rec['mail'],
+        l('Delete', 'user/' . $rec['uid'] . '/cancel'),
+    );
+    $rec = $result->fetchAssoc();
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
 }
 
