@@ -43,7 +43,19 @@ function thsc_player_entity_info() {
   
   return $info;
 }
-
+/**
+ * Deletes users that hasn't validated their account or have no children more than 24 hours ago.
+ * Users that have roles other than "authenticated user" will not be included in this process.
+ */
+function thsc_player_cron() {
+  $childless_users = _thsc_player_get_childless_users(TRUE);
+  if (count($childless_users) > 0) {
+    watchdog('cron', 'Number of ' . count($childless_users) . ' childless users are being deleted from the system.', NULL, WATCHDOG_NOTICE);
+    foreach ($childless_users as $rec) {
+      user_delete($rec['uid']);
+    }
+  }
+}
 /*
  * function thsc_player_entity_property_info() { $info = array(); $properties = &$info['thsc_player']['properties']; $properties = array( 'player_id' => array( 'type' => 'integer', 'label' => t('Member ID'), 'schema field' => 'player_id' ), 'first_name' => array( 'type' => 'text', 'label' => 'First Name', 'schema field' => 'first_name' ), 'last_name' => array( 'type' => 'text', 'label' => 'Last Name', 'schema field' => 'last_name' ), 'gender' => array( 'type' => 'text', 'label' => 'Gender', 'schema field' => 'gender' ), 'birthdate' => array( 'type' => 'date', 'label' => 'Birth Date', 'schema field' => 'birthdate' ), 'created' => array( 'type' => 'date', 'label' => 'Created At', 'schema field' => 'created' ) ); return $info; }
  */
@@ -194,9 +206,9 @@ function thsc_player_menu() {
     'title' => 'Users without child',
     'page callback' => 'thsc_player_users_without_child',
     'access arguments' => array(
-      'administer users',
+      'administer users'
     ),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_NORMAL_ITEM
   );
   
   $items['thsc/delete_nochild/%/%'] = array(
@@ -204,7 +216,7 @@ function thsc_player_menu() {
     'page callback' => 'thsc_player_delete_nochild',
     'page arguments' => array(
       2,
-      3,
+      3
     ),
     'access arguments' => array(
       'administer users'
@@ -1198,7 +1210,9 @@ function thsc_player_delete_nochild($seconds_after_created, $how_many) {
   if (empty($sec)) {
     $sec = 300;
   }
-  $query->where('((u.login - u.created) < :seconds or u.uid > 2800) and (u.uid > 0)', array(':seconds' => $sec));
+  $query->where('((u.login - u.created) < :seconds or u.uid > 2800) and (u.uid > 0)', array(
+    ':seconds' => $sec
+  ));
   $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
   $query->fields('u', array(
     'uid',
@@ -1217,7 +1231,7 @@ function thsc_player_delete_nochild($seconds_after_created, $how_many) {
   $result = $query->execute();
   $rec = $result->fetchAssoc();
   $x = 'Deleting these accounts: <br />';
-  while ($rec) {
+  while ( $rec ) {
     $x .= $rec['uid'] . ' ' . $rec['mail'] . ' ' . $rec['name'] . ' => ' . $rec['field_parent_target_id'] . '<br />';
     if (!empty($rec['uid'])) {
       user_delete($rec['uid']);
@@ -1225,33 +1239,72 @@ function thsc_player_delete_nochild($seconds_after_created, $how_many) {
     $rec = $result->fetchAssoc();
   }
   
-  return array('#type' => 'markup', '#markup' => $x);
+  return array(
+    '#type' => 'markup',
+    '#markup' => $x
+  );
 }
-function  thsc_player_users_without_child() {
+function thsc_player_users_without_child() {
+  $header = array(
+    'User ID',
+    'Name',
+    'EMail',
+    'Action'
+  );
+  $accounts = _thsc_player_get_childless_users();
+  $rows = array();
+  foreach ( $accounts as $rec ) {
+    $rows[] = array(
+      $rec['uid'],
+      l($rec['name'], 'user/' . $rec['uid']),
+      $rec['mail'],
+      l('Delete', 'user/' . $rec['uid'] . '/cancel')
+    );
+  }
+  return theme('table', array(
+    'header' => $header,
+    'rows' => $rows
+  ));
+}
+
+/**
+ * Returns an array of users with that have no child, and are only member of "authenticated users"
+ * The return array is array of
+ * 'uid' =>
+ * 'name' =>
+ * 'mail' =>
+ */
+function _thsc_player_get_childless_users($older_than_24hrs = FALSE) {
   $query = db_select('users', 'u');
   $query->where('(u.uid > 0)');
   $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
   $query->fields('u', array(
-      'uid',
-      'name',
-      'mail'
+    'uid',
+    'name',
+    'mail'
   ));
   $query->fields('p', array(
-      'field_parent_target_id'
+    'field_parent_target_id'
   ));
   $query->where('p.field_parent_target_id IS NULL');
+  if ($older_than_24hrs) {
+    $query->condition('u.created', time() - (24*60*60), '<');
+  }
   $result = $query->execute();
   $rec = $result->fetchAssoc();
-  $header = array('User ID', 'Name', 'EMail', 'Action');
   $rows = array();
-  while ($rec) {
-    $rows[] = array($rec['uid'],
-        l($rec['name'], 'user/'. $rec['uid']),
-        $rec['mail'],
-        l('Delete', 'user/' . $rec['uid'] . '/cancel'),
-    );
+  while ( $rec ) {
+    $account = user_load($rec['uid']);
+    //make sure user only has "authenticated user" role and nothing else.
+    if (count($account->roles) == 1) {
+      $rows[] = array(
+        'uid' => $account->uid,
+        'mail' => $account->mail,
+        'name' => $account->name
+      );
+    }
     $rec = $result->fetchAssoc();
   }
-  return theme('table', array('header' => $header, 'rows' => $rows));
+  return $rows;
 }
 
