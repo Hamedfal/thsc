@@ -6,4 +6,7 @@ dependencies[] = field
 dependencies[] = date
 dependencies[] = date_api
 files[] = thsc_player.controller.inc
+files[] = views/thsc_player.views.inc
+files[] = views/thsc_player_views_handler_field_member_summary.inc
+files[] = views/thsc_player_views_handler_field_profile2.inc
 configure = admin/structure/thsc_player/manage

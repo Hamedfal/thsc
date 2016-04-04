@@ -5,57 +5,80 @@
  * This file serves as a stub file for the thsc modules
  *
  */
-
 function thsc_modules_help($path, $arg) {
   // re: http://drupal.org/node/767204
   // 5. We need a master group (thsc_modules) that will be in a main
   // thsc_modules.module.
 }
-
 function thsc_modules_init() {
   drupal_add_library('system', 'ui');
   drupal_add_css(drupal_get_path('module', 'thsc_modules') . '/thsc.css');
   drupal_add_css(drupal_get_path('module', 'thsc_modules') . '/jquery-ui-1.10.4.custom/css/blitzer/jquery-ui-1.10.4.custom.min.css');
 }
-
 function thsc_modules_theme() {
   return array(
-  	'thsc_link' => array(
-  	  'template' => 'thsc-link',
-  	  'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
-  	  'variables' => array(
-  		  'value' => NULL,
-  	  ),
-    ),
-    'thsc_team_schedule_print' => array(
-  	  'template' => 'thsc-team-schedule',
+    'thsc_link' => array(
+      'template' => 'thsc-link',
       'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
       'variables' => array(
-    	  'team' => NULL,
+        'value' => NULL
+      )
+    ),
+    'thsc_team_schedule_print' => array(
+      'template' => 'thsc-team-schedule',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'variables' => array(
+        'team' => NULL,
         'schedule' => NULL,
-        'type' => NULL,
-      ),
-  	),
+        'type' => NULL
+      )
+    ),
     'thsc_registration_print' => array(
       'template' => 'thsc-registration-print',
       'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
       'variables' => array(
-    	  'player' => NULL,
-        'season' => NULL,
-      ),
+        'player' => NULL,
+        'season' => NULL
+      )
     ),
+    'thsc_player_address' => array(
+      'render element' => 'element',
+      'template' => 'thsc-player-address',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'type' => 'module'
+    ),
+    'thsc_player_father' => array(
+      'render element' => 'element',
+      'template' => 'thsc-player-father',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'type' => 'module'
+    ),
+    'thsc_player_mother' => array(
+      'render element' => 'element',
+      'template' => 'thsc-player-mother',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'type' => 'module'
+    ),
+    'thsc_player_other' => array(
+      'render element' => 'element',
+      'template' => 'thsc-player-other',
+      'path' => drupal_get_path('module', 'thsc_modules') . '/templates',
+      'type' => 'module'
+    )
   );
 }
-
 function template_preprocess_thsc_team_schedule_print(&$variables) {
   $token_info = token_info();
   $replacements = array();
-  foreach (array('site', 'store') as $t_type) {
+  foreach ( array(
+    'site',
+    'store'
+  ) as $t_type ) {
     $replacements[$t_type] = token_generate($t_type, drupal_map_assoc(array_keys($token_info['tokens'][$t_type])));
   }
-
-  foreach ($replacements as $t_type => $tokens) {
-    foreach ($tokens as $token => $value) {
+  
+  foreach ( $replacements as $t_type => $tokens ) {
+    foreach ( $tokens as $token => $value ) {
       $key = str_replace('-', '_', $t_type . '_' . $token);
       $key = str_replace('uc_', '', $key);
       $variables[$key] = $value;
@@ -65,44 +88,51 @@ function template_preprocess_thsc_team_schedule_print(&$variables) {
   if (drupal_get_title()) {
     $head_title = array(
       'title' => strip_tags(drupal_get_title()),
-      'name' => variable_get('site_name', 'THSC'),
+      'name' => variable_get('site_name', 'THSC')
     );
-  }
-  else {
-    $head_title = array('name' => variable_get('site_name', 'THSC'));
+  } else {
+    $head_title = array(
+      'name' => variable_get('site_name', 'THSC')
+    );
     if (variable_get('site_slogan', '')) {
       $head_title['slogan'] = variable_get('site_slogan', '');
     }
   }
-
+  
   // Add favicon.
   if (theme_get_setting('toggle_favicon')) {
     $favicon = theme_get_setting('favicon');
     $type = theme_get_setting('favicon_mimetype');
-    drupal_add_html_head_link(array('rel' => 'shortcut icon', 'href' => drupal_strip_dangerous_protocols($favicon), 'type' => $type));
+    drupal_add_html_head_link(array(
+      'rel' => 'shortcut icon',
+      'href' => drupal_strip_dangerous_protocols($favicon),
+      'type' => $type
+    ));
   }
   $variables['head'] = drupal_get_html_head();
-
+  
   // Set the default language if necessary.
   $language = isset($GLOBALS['language']) ? $GLOBALS['language'] : language_default();
-
+  
   $variables['head_title'] = implode(' | ', $head_title);
   $variables['base_path'] = base_path();
-  $variables['language']          = $language;
-  $variables['language']->dir     = $language->direction ? 'rtl' : 'ltr';
+  $variables['language'] = $language;
+  $variables['language']->dir = $language->direction ? 'rtl' : 'ltr';
   $group = thsc_group_load($variables['team']->group_id);
   $variables['group'] = $group;
 }
-
 function template_preprocess_thsc_registration_print(&$variables) {
   $token_info = token_info();
   $replacements = array();
-  foreach (array('site', 'store') as $t_type) {
+  foreach ( array(
+    'site',
+    'store'
+  ) as $t_type ) {
     $replacements[$t_type] = token_generate($t_type, drupal_map_assoc(array_keys($token_info['tokens'][$t_type])));
   }
-
-  foreach ($replacements as $t_type => $tokens) {
-    foreach ($tokens as $token => $value) {
+  
+  foreach ( $replacements as $t_type => $tokens ) {
+    foreach ( $tokens as $token => $value ) {
       $key = str_replace('-', '_', $t_type . '_' . $token);
       $key = str_replace('uc_', '', $key);
       $variables[$key] = $value;
@@ -112,31 +142,36 @@ function template_preprocess_thsc_registration_print(&$variables) {
   if (drupal_get_title()) {
     $head_title = array(
       'title' => strip_tags(drupal_get_title()),
-      'name' => variable_get('site_name', 'THSC'),
+      'name' => variable_get('site_name', 'THSC')
     );
-  }
-  else {
-    $head_title = array('name' => variable_get('site_name', 'THSC'));
+  } else {
+    $head_title = array(
+      'name' => variable_get('site_name', 'THSC')
+    );
     if (variable_get('site_slogan', '')) {
       $head_title['slogan'] = variable_get('site_slogan', '');
     }
   }
-
+  
   // Add favicon.
   if (theme_get_setting('toggle_favicon')) {
     $favicon = theme_get_setting('favicon');
     $type = theme_get_setting('favicon_mimetype');
-    drupal_add_html_head_link(array('rel' => 'shortcut icon', 'href' => drupal_strip_dangerous_protocols($favicon), 'type' => $type));
+    drupal_add_html_head_link(array(
+      'rel' => 'shortcut icon',
+      'href' => drupal_strip_dangerous_protocols($favicon),
+      'type' => $type
+    ));
   }
   $variables['head'] = drupal_get_html_head();
-
+  
   // Set the default language if necessary.
   $language = isset($GLOBALS['language']) ? $GLOBALS['language'] : language_default();
-
+  
   $variables['head_title'] = implode(' | ', $head_title);
   $variables['base_path'] = base_path();
-  $variables['language']          = $language;
-  $variables['language']->dir     = $language->direction ? 'rtl' : 'ltr';
+  $variables['language'] = $language;
+  $variables['language']->dir = $language->direction ? 'rtl' : 'ltr';
 }
 
 /**
@@ -146,8 +181,88 @@ function thsc_module_is_parent() {
   $user = $GLOBALS['user'];
   if ($user && ($user->uid > 0)) {
     return (!in_array('THSC Manager', $user->roles) && !in_array('THSC Staff', $user->roles) && !user_access('administer thsc_player'));
-  }
-  else {
+  } else {
     return FALSE;
+  }
+}
+
+function template_preprocess_thsc_player_address(&$variables) {
+  if (isset($variables['element']['profile'])) {
+    $profile = $variables['element']['profile'];
+    $wrapper = entity_metadata_wrapper('profile2', $profile);
+    $street = $wrapper->field_street->value();
+    $aptno = $wrapper->field_apt_no->value();
+    if (!empty($aptno)) {
+      $street .= ' #' . $aptno;
+    }
+    $city = $wrapper->field_city->value();
+    $postalcode = $wrapper->field_postal_code->value();
+    $variables['rendered_data'] = $street . ', ' . $city . ' ' . $postalcode;
+  } else {
+    $variables['rendered_data'] = '';
+  }
+}
+
+function template_preprocess_thsc_player_father(&$variables) {
+  if (isset($variables['element']['profile'])) {
+    $profile = $variables['element']['profile'];
+    $wrapper = entity_metadata_wrapper('profile2', $profile);
+    $firstname = $wrapper->field_first_name->value();
+    $lastname = $wrapper->field_last_name->value();
+    $home = $wrapper->field_home_phone->value();
+    $other = $wrapper->field_other_phone->value();
+    $email = $wrapper->field_email->value();
+    $variables['rendered_data'] = $firstname . ' ' . $lastname;
+    if (!empty($home)) {
+      $variables['rendered_data'] .= ', home: ' . $home;
+    }
+    if (!empty($other)) {
+      $variables['rendered_data'] .= ', other: ' . $other;
+    }
+    if (!empty($email)) {
+      $variables['rendered_data'] .= ', ' . $email;
+    }
+  } else {
+    $variables['rendered_data'] = '';
+  }
+}
+
+function template_preprocess_thsc_player_mother(&$variables) {
+  if (isset($variables['element']['profile'])) {
+    $profile = $variables['element']['profile'];
+    $wrapper = entity_metadata_wrapper('profile2', $profile);
+     $firstname = $wrapper->field_first_name->value();
+    $lastname = $wrapper->field_last_name->value();
+    $home = $wrapper->field_home_phone->value();
+    $other = $wrapper->field_other_phone->value();
+    $email = $wrapper->field_email->value();
+    $variables['rendered_data'] = $firstname . ' ' . $lastname;
+    if (!empty($home)) {
+      $variables['rendered_data'] .= ', home: ' . $home;
+    }
+    if (!empty($other)) {
+      $variables['rendered_data'] .= ', other: ' . $other;
+    }
+    if (!empty($email)) {
+      $variables['rendered_data'] .= ', ' . $email;
+    }
+  } else {
+    $variables['rendered_data'] = '';
+  }
+}
+
+function template_preprocess_thsc_player_other(&$variables) {
+  if (isset($variables['element']['profile'])) {
+    $profile = $variables['element']['profile'];
+    $wrapper = entity_metadata_wrapper('profile2', $profile);
+    $volun = $wrapper->field_yes_no->value();
+    if ($volun) {
+      $variables['rendered_data'] = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' .$wrapper->field_home_phone->value();
+    }
+    else {
+      $variables['rendered_data'] = '';
+    }
+  } else {
+    $variables['rendered_data'] = '';
   }
 }

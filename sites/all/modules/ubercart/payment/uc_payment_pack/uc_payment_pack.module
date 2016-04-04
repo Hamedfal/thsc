@@ -37,7 +37,7 @@ function uc_payment_pack_uc_payment_method() {
   );
   $methods['cod'] = array(
     'name'       => t('COD'),
-    'title'      => t('Pay In Person'),
+    'title'      => t('Cash on delivery'),
     'desc'       => t('Pay cash on delivery on pick-up.'),
     'callback'   => 'uc_payment_method_cod',
     'weight'     => 1,

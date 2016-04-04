@@ -7,3 +7,4 @@ dependencies[] = date
 dependencies[] = date_api
 dependencies[] = thsc_player
 files[] = thsc_activeplayer.controller.inc
+files[] = views/thsc_activeplayer.views.inc

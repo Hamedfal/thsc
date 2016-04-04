@@ -51,9 +51,12 @@ function thsc_player_cron() {
   $childless_users = _thsc_player_get_childless_users(TRUE);
   if (count($childless_users) > 0) {
     watchdog('cron', 'Number of ' . count($childless_users) . ' childless users are being deleted from the system.', NULL, WATCHDOG_NOTICE);
-    foreach ($childless_users as $rec) {
+    foreach ( $childless_users as $rec ) {
       user_delete($rec['uid']);
     }
+  }
+  else {
+    watchdog('cron', 'THSC Player cron ran with no spam data to delete!', NULL, WATCHDOG_NOTICE);
   }
 }
 /*
@@ -63,6 +66,54 @@ function thsc_player_views_api() {
   return array(
     'api' => 3,
     'path' => drupal_get_path('module', 'thsc_player') . '/views'
+  );
+}
+function thsc_player_views_data_alter(&$data) {
+  // we are virtually data
+  $data['thsc_player']['member_summary'] = array(
+    'title' => t('Member Summary'),
+    'help' => 'Render information from thsc_player',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_member_summary',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
+  );
+  $data['thsc_player']['father'] = array(
+    'title' => t('Father'),
+    'help' => 'Render information from profile:father',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
+  );
+  $data['thsc_player']['mother'] = array(
+    'title' => t('Mother'),
+    'help' => 'Render information from profile:mother',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
+  );
+  $data['thsc_player']['address'] = array(
+    'title' => t('Address'),
+    'help' => 'Render information from profile:address',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
+  );
+  $data['thsc_player']['other'] = array(
+    'title' => t('Other Information'),
+    'help' => 'Render information from profile:other_information',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
   );
 }
 function thsc_player_permission() {
@@ -223,6 +274,25 @@ function thsc_player_menu() {
     ),
     'type' => MENU_CALLBACK
   );
+  
+  $items['thsc/allmembers'] = array(
+    'title' => 'Full Members Report',
+    'page callback' => 'thsc_player_all_members_report',
+    'access arguments' => array(
+      'administer users'
+    ),
+    'type' => MENU_NORMAL_ITEM
+  );
+  
+  $items['thsc/debug'] = array(
+    'title' => 'Debugging THSC Modules',
+    'page callback' => 'thsc_player_debug',
+    'access arguments' => array(
+      'administer users'
+    ),
+    'type' => MENU_CALLBACK
+  );
+  
   return $items;
 }
 function thsc_player_menu_alter(&$items) {
@@ -775,33 +845,35 @@ function thsc_player_view($player, $view_mode = 'full') {
   ));
   $player->content += field_attach_view($entity_type, $player, $view_mode);
   
-  $player->content['created'] = array(
-    '#type' => 'item',
-    '#title' => t('Date Player Was Added'),
-    '#markup' => format_date($player->created),
-    '#weight' => 20
-  );
-  $player->content['print'] = array(
-    '#theme' => 'thsc_link',
-    '#value' => l('Print Registration Paper', 'thsc_player/' . $player->player_id . '/registration/print', array(
-      'attributes' => array(
-        'class' => 'active'
-      )
-    )),
-    '#weight' => -10
-  );
-  $player->content['gender'] = array(
-    '#type' => 'item',
-    '#title' => t('Gender'),
-    '#markup' => ($player->gender == 'M') ? 'Male' : 'Female',
-    '#weight' => -6
-  );
-  $player->content['birthdate'] = array(
-    '#type' => 'item',
-    '#title' => t('Birth Date'),
-    '#markup' => format_date($player->birthdate, 'custom', 'M d, Y'),
-    '#weight' => -4
-  );
+  if ($view_mode == 'full') {
+    $player->content['created'] = array(
+      '#type' => 'item',
+      '#title' => t('Date Player Was Added'),
+      '#markup' => format_date($player->created),
+      '#weight' => 20
+    );
+    $player->content['print'] = array(
+      '#theme' => 'thsc_link',
+      '#value' => l('Print Registration Paper', 'thsc_player/' . $player->player_id . '/registration/print', array(
+        'attributes' => array(
+          'class' => 'active'
+        )
+      )),
+      '#weight' => -10
+    );
+    $player->content['gender'] = array(
+      '#type' => 'item',
+      '#title' => t('Gender'),
+      '#markup' => ($player->gender == 'M') ? 'Male' : 'Female',
+      '#weight' => -6
+    );
+    $player->content['birthdate'] = array(
+      '#type' => 'item',
+      '#title' => t('Birth Date'),
+      '#markup' => format_date($player->birthdate, 'custom', 'M d, Y'),
+      '#weight' => -4
+    );
+  }
   global $language;
   $langcode = $language->language;
   module_invoke_all('entity_view', $player, $entity_type, $view_mode, $langcode);
@@ -810,9 +882,10 @@ function thsc_player_view($player, $view_mode = 'full') {
     'entity_view'
   ), $player->content, $entity_type);
   
-  $player->content['seasons_table'] = thsc_activeplayer_playerload($player->player_id, TRUE);
-  $player->content['seasons_table']['#weight'] = 20;
-  
+  if ($view_mode == 'full') {
+    $player->content['seasons_table'] = thsc_activeplayer_playerload($player->player_id, TRUE);
+    $player->content['seasons_table']['#weight'] = 20;
+  }
   return $player->content;
 }
 function thsc_player_field_extra_fields() {
@@ -1121,7 +1194,6 @@ function thsc_player_calculate_age($birthdate) {
   $unixage = time() - $birthdate;
   return floor($unixage / (365 * 24 * 60 * 60));
 }
-
 /**
  * Performing custom actions when a season becomes "Registering"!
  * We should set the system variable "thsc_registering_season_id" to the node id of that season.
@@ -1204,6 +1276,68 @@ function thsc_player_node_validate($node, $form, &$form_state) {
     }
   }
 }
+function thsc_player_users_without_child() {
+  $header = array(
+    'User ID',
+    'Name',
+    'EMail',
+    'Action'
+  );
+  $accounts = _thsc_player_get_childless_users();
+  $rows = array();
+  foreach ( $accounts as $rec ) {
+    $rows[] = array(
+      $rec['uid'],
+      l($rec['name'], 'user/' . $rec['uid']),
+      $rec['mail'],
+      l('Delete', 'user/' . $rec['uid'] . '/cancel')
+    );
+  }
+  return theme('table', array(
+    'header' => $header,
+    'rows' => $rows
+  ));
+}
+/**
+ * Returns an array of users with that have no child, and are only member of "authenticated users"
+ * The return array is array of
+ * 'uid' =>
+ * 'name' =>
+ * 'mail' =>
+ */
+function _thsc_player_get_childless_users($older_than_24hrs = FALSE) {
+  $query = db_select('users', 'u');
+  $query->where('(u.uid > 0)');
+  $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
+  $query->fields('u', array(
+    'uid',
+    'name',
+    'mail'
+  ));
+  $query->fields('p', array(
+    'field_parent_target_id'
+  ));
+  $query->where('p.field_parent_target_id IS NULL');
+  if ($older_than_24hrs) {
+    $query->condition('u.created', time() - (24 * 60 * 60), '<');
+  }
+  $result = $query->execute();
+  $rec = $result->fetchAssoc();
+  $rows = array();
+  while ( $rec ) {
+    $account = user_load($rec['uid']);
+    // make sure user only has "authenticated user" role and nothing else.
+    if (count($account->roles) == 1) {
+      $rows[] = array(
+        'uid' => $account->uid,
+        'mail' => $account->mail,
+        'name' => $account->name
+      );
+    }
+    $rec = $result->fetchAssoc();
+  }
+  return $rows;
+}
 function thsc_player_delete_nochild($seconds_after_created, $how_many) {
   $query = db_select('users', 'u');
   $sec = intval($seconds_after_created);
@@ -1244,67 +1378,80 @@ function thsc_player_delete_nochild($seconds_after_created, $how_many) {
     '#markup' => $x
   );
 }
-function thsc_player_users_without_child() {
-  $header = array(
-    'User ID',
-    'Name',
-    'EMail',
-    'Action'
+
+/**
+ * Simple page to show links to all members report based on each season.
+ */
+function thsc_player_all_members_report() {
+  $content = array();
+  $query = db_select('node', 'n');
+  $query->condition('type', 'season', '=');
+  $query->fields('n', array(
+    'nid'
+  ));
+  $nids = $query->execute()
+    ->fetchCol();
+  
+  $content['report_help'] = array(
+    '#type' => 'markup',
+    '#markup' => '<strong>Please Note: When downloading your report, please make sure you enter a filename with "XLS" extension.</strong>'
   );
-  $accounts = _thsc_player_get_childless_users();
+  
   $rows = array();
-  foreach ( $accounts as $rec ) {
+  $rows[] = array(
+    'data' => array(
+      l('Full Members Report', '/seasonaldata-xls/all')
+    )
+  );
+  
+  foreach ( $nids as $nid ) {
+    $node = node_load($nid);
     $rows[] = array(
-      $rec['uid'],
-      l($rec['name'], 'user/' . $rec['uid']),
-      $rec['mail'],
-      l('Delete', 'user/' . $rec['uid'] . '/cancel')
+      'data' => array(
+        l($node->title, '/seasonaldata-xls/' . $nid)
+      )
     );
   }
-  return theme('table', array(
-    'header' => $header,
-    'rows' => $rows
-  ));
+  
+  $content['allmembers'] = array(
+    '#type' => 'markup',
+    '#markup' => theme('table', array(
+      'header' => array(
+        'Available Reports'
+      ),
+      'rows' => $rows
+    ))
+  );
+  
+  return $content;
 }
 
 /**
- * Returns an array of users with that have no child, and are only member of "authenticated users"
- * The return array is array of
- * 'uid' =>
- * 'name' =>
- * 'mail' =>
+ * Debug method.
+ *
+ * @return string[]|string[][]|Either[]
  */
-function _thsc_player_get_childless_users($older_than_24hrs = FALSE) {
-  $query = db_select('users', 'u');
-  $query->where('(u.uid > 0)');
-  $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
-  $query->fields('u', array(
-    'uid',
-    'name',
-    'mail'
-  ));
-  $query->fields('p', array(
-    'field_parent_target_id'
-  ));
-  $query->where('p.field_parent_target_id IS NULL');
-  if ($older_than_24hrs) {
-    $query->condition('u.created', time() - (24*60*60), '<');
-  }
-  $result = $query->execute();
-  $rec = $result->fetchAssoc();
-  $rows = array();
-  while ( $rec ) {
-    $account = user_load($rec['uid']);
-    //make sure user only has "authenticated user" role and nothing else.
-    if (count($account->roles) == 1) {
-      $rows[] = array(
-        'uid' => $account->uid,
-        'mail' => $account->mail,
-        'name' => $account->name
-      );
-    }
-    $rec = $result->fetchAssoc();
-  }
-  return $rows;
+function thsc_player_debug() {
+  // $arg2 = arg(2);
+  // $uid = isset($arg2) ? $arg2 : 1;
+  // $account = user_load($uid);
+  // $profile2 = profile2_load_by_user($account, 'address');
+  // if (!empty($profile2)) {
+  // $content['test'] = array(
+  // '#theme' => 'thsc_player_address',
+  // 'profile' => $profile2
+  // );
+  // } else {
+  // $content['test'] = array(
+  // '#type' => 'markup',
+  // '#markup' => 'No profile2 available'
+  // );
+  // }
+  $content['debug'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Debugging Page'
+  );
+  
+  return $content;
 }
 
