@@ -1,0 +1,16 @@
+name = THSC Features
+description = Predefined set of views and other data related to thsc modules
+core = 7.x
+package = THSC modules
+version = 7.x-1.0
+dependencies[] = datatables
+dependencies[] = views
+dependencies[] = views_data_export
+features[ctools][] = views:views_default:3.0
+features[features_api][] = api:2
+features[views_view][] = clone_of_list_of_games
+features[views_view][] = list_of_games
+features[views_view][] = members_in_season
+features[views_view][] = members_list
+features[views_view][] = seasonal_data
+features_exclude[dependencies][ctools] = ctools
