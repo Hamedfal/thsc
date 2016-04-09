@@ -1,5 +1,0 @@
-This file was created from master branch, not test1
-i switched to branch: master
-
-created the file
-the i am commiting the file while creating a new branch: test2

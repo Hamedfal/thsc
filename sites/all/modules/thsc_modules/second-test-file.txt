@@ -1,3 +1,0 @@
-And we are adding another test file to test1 branch
-
-now we want to merge this with master, also make some changes to a common file in all branches: thsc.css
