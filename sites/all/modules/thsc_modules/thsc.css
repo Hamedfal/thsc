@@ -6,6 +6,9 @@ This comment is added to branch test2, while it was not here in master or branch
 	font-style: italic;
 }
 
+this line here is being added in test1 branch. 
+this file will result a conflict when merged into master
+
 .schedule-type-cell {
 	font-size: x-small;
 }
