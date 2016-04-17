@@ -332,7 +332,7 @@ function thsc_game_prepare($node) {
 
 function thsc_game_view($node, $view_mode) {
   $team_content = '<div class="field-item even">';
-  if ($node->teams && is_array($node->teams) && count($node->teams) > 0) {
+  if (isset($node->teams) && is_array($node->teams) && count($node->teams) > 0) {
     if (!empty($node->group_name)) {
       $team_content .= '<span class="thsc-group-name">Group ' . $node->group_name . '</span>';
     }
