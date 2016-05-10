@@ -10,13 +10,13 @@
  * class definition
  */
 class thsc_player_views_handler_field_profile2 extends views_handler_field {
-  
+
   /**
    * Query
    */
   function query() {
   }
-  
+
   /**
    * Render
    */
@@ -25,7 +25,7 @@ class thsc_player_views_handler_field_profile2 extends views_handler_field {
     if (!empty($player)) {
       $wrapper = entity_metadata_wrapper('thsc_player', $player);
       $parent = $wrapper->field_parent->value();
-      
+
       switch ($this->field) {
         case 'father' :
           $profile2 = profile2_load_by_user($parent, 'father_gardian');
@@ -36,6 +36,13 @@ class thsc_player_views_handler_field_profile2 extends views_handler_field {
             );
           }
           break;
+        case 'father_email' :
+          $profile2 = profile2_load_by_user($parent, 'father_gardian');
+          if (isset($profile2)) {
+            $wrapper = entity_metadata_wrapper('profile2', $profile2);
+            return $wrapper->field_email->value();
+          }
+          break;
         case 'mother' :
           $profile2 = profile2_load_by_user($parent, 'mother_gardian');
           if (isset($profile2)) {
@@ -43,6 +50,13 @@ class thsc_player_views_handler_field_profile2 extends views_handler_field {
               '#theme' => 'thsc_player_mother',
               'profile' => $profile2
             );
+          }
+          break;
+        case 'mother_email' :
+          $profile2 = profile2_load_by_user($parent, 'mother_gardian');
+          if (isset($profile2)) {
+            $wrapper = entity_metadata_wrapper('profile2', $profile2);
+            return $wrapper->field_email->value();
           }
           break;
         case 'address' :

@@ -40,7 +40,7 @@ function thsc_player_entity_info() {
       )
     )
   );
-  
+
   return $info;
 }
 /**
@@ -88,6 +88,15 @@ function thsc_player_views_data_alter(&$data) {
       'click sortable' => FALSE
     )
   );
+  $data['thsc_player']['father_email'] = array(
+      'title' => t('Father Email'),
+      'help' => 'From profile:father email address',
+      'field' => array(
+          'handler' => 'thsc_player_views_handler_field_profile2',
+          'group' => 'THSC Member',
+          'click sortable' => FALSE
+      )
+  );
   $data['thsc_player']['mother'] = array(
     'title' => t('Mother'),
     'help' => 'Render information from profile:mother',
@@ -96,6 +105,15 @@ function thsc_player_views_data_alter(&$data) {
       'group' => 'THSC Member',
       'click sortable' => FALSE
     )
+  );
+  $data['thsc_player']['mother_email'] = array(
+      'title' => t('Mother Email'),
+      'help' => 'From profile:mother email address',
+      'field' => array(
+          'handler' => 'thsc_player_views_handler_field_profile2',
+          'group' => 'THSC Member',
+          'click sortable' => FALSE
+      )
   );
   $data['thsc_player']['address'] = array(
     'title' => t('Address'),
@@ -153,7 +171,7 @@ function thsc_player_menu() {
       'administer thsc_player'
     )
   );
-  
+
   $items['admin/structure/thsc_player/manage'] = array(
     'title' => 'THSC Members',
     'description' => 'Manage THSC Player Structure',
@@ -162,12 +180,12 @@ function thsc_player_menu() {
       'administer thsc_player'
     )
   );
-  
+
   $items['admin/structure/thsc_player/manage/list'] = array(
     'title' => 'List',
     'type' => MENU_DEFAULT_LOCAL_TASK
   );
-  
+
   $items['thsc_player/%thsc_player'] = array(
     'title callback' => 'thsc_player_view_title',
     'title arguments' => array(
@@ -184,12 +202,12 @@ function thsc_player_menu() {
     ),
     'type' => MENU_CALLBACK
   );
-  
+
   $items['thsc_player/%thsc_player/view'] = array(
     'title' => 'View',
     'type' => MENU_DEFAULT_LOCAL_TASK
   );
-  
+
   $items['thsc_player/%thsc_player/edit'] = array(
     'title' => 'Edit',
     'page callback' => 'drupal_get_form',
@@ -204,7 +222,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_LOCAL_TASK
   );
-  
+
   $items['thsc_player/register/%thsc_player'] = array(
     'title' => 'Register',
     'page callback' => 'thsc_player_register',
@@ -218,7 +236,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_CALLBACK
   );
-  
+
   $items['thsc_player/add'] = array(
     'title' => 'Add THSC Members',
     'page callback' => 'thsc_player_add',
@@ -227,7 +245,7 @@ function thsc_player_menu() {
       'add'
     )
   );
-  
+
   $items['thsc_player/makepayment/user/%'] = array(
     'title' => 'Make Payment',
     'page callback' => 'thsc_player_payment_calculate',
@@ -239,7 +257,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_LOCAL_TASK
   );
-  
+
   $items['thsc_player/%thsc_player/registration/print'] = array(
     'title' => 'Print Registration',
     'page callback' => 'thsc_player_registration_print',
@@ -252,7 +270,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_CALLBACK
   );
-  
+
   $items['thsc/users_without_child'] = array(
     'title' => 'Users without child',
     'page callback' => 'thsc_player_users_without_child',
@@ -261,7 +279,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_NORMAL_ITEM
   );
-  
+
   $items['thsc/delete_nochild/%/%'] = array(
     'title' => 'Debugging THSC Modules',
     'page callback' => 'thsc_player_delete_nochild',
@@ -274,7 +292,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_CALLBACK
   );
-  
+
   $items['thsc/allmembers'] = array(
     'title' => 'Full Members Report',
     'page callback' => 'thsc_player_all_members_report',
@@ -283,7 +301,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_NORMAL_ITEM
   );
-  
+
   $items['thsc/debug'] = array(
     'title' => 'Debugging THSC Modules',
     'page callback' => 'thsc_player_debug',
@@ -292,7 +310,7 @@ function thsc_player_menu() {
     ),
     'type' => MENU_CALLBACK
   );
-  
+
   return $items;
 }
 function thsc_player_menu_alter(&$items) {
@@ -348,7 +366,7 @@ function thsc_player_access($action = 'view', $player = NULL) {
   } else {
     return FALSE;
   }
-  
+
   return ($GLOBALS['user']->uid == $parent_uid);
 }
 function thsc_player_list_players() {
@@ -451,7 +469,7 @@ function thsc_player_list_players() {
           )
         )
       );
-      
+
       if (module_exists('thsc_game')) {
         $header[] = array(
           'data' => 'Full Schedule',
@@ -468,14 +486,14 @@ function thsc_player_list_players() {
           )
         );
       }
-      
+
       $attributes['datatable_options'] = array(
         'bFilter' => TRUE,
         'bInfo' => TRUE,
         'bSort' => TRUE,
         'bJQueryUI' => TRUE
       );
-      
+
       $content['entity_datatable'] = array(
         '#theme' => 'datatable',
         '#header' => $header,
@@ -506,7 +524,7 @@ function thsc_player_list_players() {
       '#markup' => t('No THSC Members currently exist!')
     );
   }
-  
+
   return $content;
 }
 function thsc_player_mychildren_access() {
@@ -650,7 +668,7 @@ function thsc_player_mychildren() {
           )
         )
       );
-      
+
       if (module_exists('thsc_game')) {
         $header[] = array(
           'data' => 'Full Schedule',
@@ -667,7 +685,7 @@ function thsc_player_mychildren() {
           )
         );
       }
-      
+
       $attributes['datatable_options'] = array(
         'bFilter' => FALSE,
         'bInfo' => FALSE,
@@ -675,7 +693,7 @@ function thsc_player_mychildren() {
         'bPaginate' => FALSE,
         'bJQueryUI' => TRUE
       );
-      
+
       $content['entity_datatable'] = array(
         '#theme' => 'datatable',
         '#header' => $header,
@@ -706,7 +724,7 @@ function thsc_player_mychildren() {
         '#suffix' => '</div>',
         '#weight' => 50
       );
-      
+
       $content['payment_section']['payment_path'] = array(
         '#theme' => 'thsc_link',
         '#value' => l('Make Payment $' . $total_fee, 'thsc_player/makepayment/user/' . $GLOBALS['user']->uid, array(
@@ -717,7 +735,7 @@ function thsc_player_mychildren() {
       );
     }
   }
-  
+
   return $content;
 }
 function thsc_player_payment_calculate($parent_uid) {
@@ -836,7 +854,7 @@ function thsc_player_view_title($player) {
 function thsc_player_view($player, $view_mode = 'full') {
   $entity_type = 'thsc_player';
   $player->content = array();
-  
+
   field_attach_prepare_view($entity_type, array(
     $player->player_id => $player
   ), $view_mode);
@@ -844,7 +862,7 @@ function thsc_player_view($player, $view_mode = 'full') {
     $player->player_id => $player
   ));
   $player->content += field_attach_view($entity_type, $player, $view_mode);
-  
+
   if ($view_mode == 'full') {
     $player->content['created'] = array(
       '#type' => 'item',
@@ -881,7 +899,7 @@ function thsc_player_view($player, $view_mode = 'full') {
     'thsc_player_view',
     'entity_view'
   ), $player->content, $entity_type);
-  
+
   if ($view_mode == 'full') {
     $player->content['seasons_table'] = thsc_activeplayer_playerload($player->player_id, TRUE);
     $player->content['seasons_table']['#weight'] = 20;
@@ -910,7 +928,7 @@ function thsc_player_field_extra_fields() {
       )
     )
   );
-  
+
   return $return;
 }
 function thsc_player_add() {
@@ -963,14 +981,14 @@ function thsc_player_form($form, &$form_state, $player) {
     '#type' => 'value',
     '#value' => $player
   );
-  
+
   field_attach_form('thsc_player', $player, $form, $form_state);
   // hide the "parent selection" element for regular users (THSC Staff/Managers and administrators will see this)
   if (thsc_module_is_parent()) {
     $form['field_parent']['#type'] = 'hidden';
     $form['field_parent'][LANGUAGE_NONE]['#required'] = 0;
   }
-  
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -986,7 +1004,7 @@ function thsc_player_form($form, &$form_state, $player) {
       '#weight' => 120
     );
   }
-  
+
   return $form;
 }
 function thsc_player_form_validate($form, &$form_state) {
@@ -1182,7 +1200,7 @@ function thsc_player_registration_print($player) {
   // array
   // 'label' => field label
   // 'data' => field value
-  
+
   drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
   return theme('thsc_registration_print', array(
     'player' => $player,
@@ -1225,7 +1243,7 @@ function thsc_player_node_validate($node, $form, &$form_state) {
     variable_set('thsc_active_season', $node->nid);
   }
   // the else part for "activeseason" is checked below, after dealing with "registering" field.
-  
+
   if ($thisnode_wrapper->field_registering->value() == '1') {
     if ($thisnode_wrapper->field_active_season->value() != '1') {
       form_set_error('#field_active_season', 'You cannot set "Registering" flag for a season that is not ACTIVE!');
@@ -1268,7 +1286,7 @@ function thsc_player_node_validate($node, $form, &$form_state) {
       variable_set('thsc_registering_season_id', 0);
     }
   }
-  
+
   if ($thisnode_wrapper->field_active_season->value() == '0') {
     $current_activeseason_nid = variable_get('thsc_active_season', 0);
     if ($node->nid == $current_activeseason_nid) {
@@ -1372,7 +1390,7 @@ function thsc_player_delete_nochild($seconds_after_created, $how_many) {
     }
     $rec = $result->fetchAssoc();
   }
-  
+
   return array(
     '#type' => 'markup',
     '#markup' => $x
@@ -1391,19 +1409,19 @@ function thsc_player_all_members_report() {
   ));
   $nids = $query->execute()
     ->fetchCol();
-  
+
   $content['report_help'] = array(
     '#type' => 'markup',
     '#markup' => '<strong>Please Note: When downloading your report, please make sure you enter a filename with "XLS" extension.</strong>'
   );
-  
+
   $rows = array();
   $rows[] = array(
     'data' => array(
       l('Full Members Report', '/seasonaldata-xls/all')
     )
   );
-  
+
   foreach ( $nids as $nid ) {
     $node = node_load($nid);
     $rows[] = array(
@@ -1412,7 +1430,7 @@ function thsc_player_all_members_report() {
       )
     );
   }
-  
+
   $content['allmembers'] = array(
     '#type' => 'markup',
     '#markup' => theme('table', array(
@@ -1422,7 +1440,7 @@ function thsc_player_all_members_report() {
       'rows' => $rows
     ))
   );
-  
+
   return $content;
 }
 
@@ -1451,7 +1469,7 @@ function thsc_player_debug() {
     '#type' => 'markup',
     '#markup' => 'Debugging Page'
   );
-  
+
   return $content;
 }
 

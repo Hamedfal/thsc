@@ -76,7 +76,7 @@ function template_preprocess_thsc_team_schedule_print(&$variables) {
   ) as $t_type ) {
     $replacements[$t_type] = token_generate($t_type, drupal_map_assoc(array_keys($token_info['tokens'][$t_type])));
   }
-  
+
   foreach ( $replacements as $t_type => $tokens ) {
     foreach ( $tokens as $token => $value ) {
       $key = str_replace('-', '_', $t_type . '_' . $token);
@@ -98,7 +98,7 @@ function template_preprocess_thsc_team_schedule_print(&$variables) {
       $head_title['slogan'] = variable_get('site_slogan', '');
     }
   }
-  
+
   // Add favicon.
   if (theme_get_setting('toggle_favicon')) {
     $favicon = theme_get_setting('favicon');
@@ -110,10 +110,10 @@ function template_preprocess_thsc_team_schedule_print(&$variables) {
     ));
   }
   $variables['head'] = drupal_get_html_head();
-  
+
   // Set the default language if necessary.
   $language = isset($GLOBALS['language']) ? $GLOBALS['language'] : language_default();
-  
+
   $variables['head_title'] = implode(' | ', $head_title);
   $variables['base_path'] = base_path();
   $variables['language'] = $language;
@@ -130,7 +130,7 @@ function template_preprocess_thsc_registration_print(&$variables) {
   ) as $t_type ) {
     $replacements[$t_type] = token_generate($t_type, drupal_map_assoc(array_keys($token_info['tokens'][$t_type])));
   }
-  
+
   foreach ( $replacements as $t_type => $tokens ) {
     foreach ( $tokens as $token => $value ) {
       $key = str_replace('-', '_', $t_type . '_' . $token);
@@ -152,7 +152,7 @@ function template_preprocess_thsc_registration_print(&$variables) {
       $head_title['slogan'] = variable_get('site_slogan', '');
     }
   }
-  
+
   // Add favicon.
   if (theme_get_setting('toggle_favicon')) {
     $favicon = theme_get_setting('favicon');
@@ -164,10 +164,10 @@ function template_preprocess_thsc_registration_print(&$variables) {
     ));
   }
   $variables['head'] = drupal_get_html_head();
-  
+
   // Set the default language if necessary.
   $language = isset($GLOBALS['language']) ? $GLOBALS['language'] : language_default();
-  
+
   $variables['head_title'] = implode(' | ', $head_title);
   $variables['base_path'] = base_path();
   $variables['language'] = $language;
@@ -211,7 +211,7 @@ function template_preprocess_thsc_player_father(&$variables) {
     $lastname = $wrapper->field_last_name->value();
     $home = $wrapper->field_home_phone->value();
     $other = $wrapper->field_other_phone->value();
-    $email = $wrapper->field_email->value();
+    //$email = $wrapper->field_email->value();
     $variables['rendered_data'] = $firstname . ' ' . $lastname;
     if (!empty($home)) {
       $variables['rendered_data'] .= ', home: ' . $home;
@@ -219,9 +219,9 @@ function template_preprocess_thsc_player_father(&$variables) {
     if (!empty($other)) {
       $variables['rendered_data'] .= ', other: ' . $other;
     }
-    if (!empty($email)) {
-      $variables['rendered_data'] .= ', ' . $email;
-    }
+//     if (!empty($email)) {
+//       $variables['rendered_data'] .= ', ' . $email;
+//     }
   } else {
     $variables['rendered_data'] = '';
   }
@@ -235,7 +235,7 @@ function template_preprocess_thsc_player_mother(&$variables) {
     $lastname = $wrapper->field_last_name->value();
     $home = $wrapper->field_home_phone->value();
     $other = $wrapper->field_other_phone->value();
-    $email = $wrapper->field_email->value();
+    //$email = $wrapper->field_email->value();
     $variables['rendered_data'] = $firstname . ' ' . $lastname;
     if (!empty($home)) {
       $variables['rendered_data'] .= ', home: ' . $home;
@@ -243,9 +243,9 @@ function template_preprocess_thsc_player_mother(&$variables) {
     if (!empty($other)) {
       $variables['rendered_data'] .= ', other: ' . $other;
     }
-    if (!empty($email)) {
-      $variables['rendered_data'] .= ', ' . $email;
-    }
+//     if (!empty($email)) {
+//       $variables['rendered_data'] .= ', ' . $email;
+//     }
   } else {
     $variables['rendered_data'] = '';
   }
