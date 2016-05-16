@@ -486,7 +486,10 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'full';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '100';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '0';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'datatables';
   /* Relationship: THSC Active Player: Related THSC Member */
   $handler->display->display_options['relationships']['player_id']['id'] = 'player_id';
@@ -496,14 +499,17 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['season_id']['id'] = 'season_id';
   $handler->display->display_options['fields']['season_id']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['season_id']['field'] = 'season_id';
+  $handler->display->display_options['fields']['season_id']['exclude'] = TRUE;
   /* Field: THSC Active Player: Member ID */
   $handler->display->display_options['fields']['player_id']['id'] = 'player_id';
   $handler->display->display_options['fields']['player_id']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['player_id']['field'] = 'player_id';
+  $handler->display->display_options['fields']['player_id']['exclude'] = TRUE;
   /* Field: THSC Member Information: File No */
   $handler->display->display_options['fields']['field_file_no']['id'] = 'field_file_no';
   $handler->display->display_options['fields']['field_file_no']['table'] = 'field_data_field_file_no';
   $handler->display->display_options['fields']['field_file_no']['field'] = 'field_file_no';
+  $handler->display->display_options['fields']['field_file_no']['exclude'] = TRUE;
   /* Field: THSC Member: Created At */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'thsc_player';
@@ -527,7 +533,13 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['birthdate']['table'] = 'thsc_player';
   $handler->display->display_options['fields']['birthdate']['field'] = 'birthdate';
   $handler->display->display_options['fields']['birthdate']['date_format'] = 'uc_store';
+  $handler->display->display_options['fields']['birthdate']['custom_date_format'] = '1';
   $handler->display->display_options['fields']['birthdate']['second_date_format'] = 'long';
+  /* Field: THSC Member: Player Age */
+  $handler->display->display_options['fields']['age']['id'] = 'age';
+  $handler->display->display_options['fields']['age']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['age']['field'] = 'age';
+  $handler->display->display_options['fields']['age']['label'] = 'Age';
   /* Field: THSC Active Player: Registered At */
   $handler->display->display_options['fields']['registered_at']['id'] = 'registered_at';
   $handler->display->display_options['fields']['registered_at']['table'] = 'thsc_activeplayer';
@@ -547,10 +559,18 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['father']['id'] = 'father';
   $handler->display->display_options['fields']['father']['table'] = 'thsc_player';
   $handler->display->display_options['fields']['father']['field'] = 'father';
+  /* Field: THSC Member: Father Email */
+  $handler->display->display_options['fields']['father_email']['id'] = 'father_email';
+  $handler->display->display_options['fields']['father_email']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['father_email']['field'] = 'father_email';
   /* Field: THSC Member: Mother */
   $handler->display->display_options['fields']['mother']['id'] = 'mother';
   $handler->display->display_options['fields']['mother']['table'] = 'thsc_player';
   $handler->display->display_options['fields']['mother']['field'] = 'mother';
+  /* Field: THSC Member: Mother Email */
+  $handler->display->display_options['fields']['mother_email']['id'] = 'mother_email';
+  $handler->display->display_options['fields']['mother_email']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['mother_email']['field'] = 'mother_email';
   /* Field: THSC Member: Other Information */
   $handler->display->display_options['fields']['other']['id'] = 'other';
   $handler->display->display_options['fields']['other']['table'] = 'thsc_player';
@@ -571,11 +591,266 @@ function thsc_features_views_default_views() {
   /* Display: Data export */
   $handler = $view->new_display('views_data_export', 'Data export', 'views_data_export_1');
   $handler->display->display_options['pager']['type'] = 'some';
-  $handler->display->display_options['style_plugin'] = 'views_data_export_xls';
-  $handler->display->display_options['style_options']['provide_file'] = 0;
+  $handler->display->display_options['style_plugin'] = 'views_data_export_xlsx';
+  $handler->display->display_options['style_options']['provide_file'] = 1;
+  $handler->display->display_options['style_options']['filename'] = '%1-value Report.xlsx';
   $handler->display->display_options['style_options']['parent_sort'] = 0;
   $handler->display->display_options['path'] = 'seasonaldata-xls/%';
   $export['seasonal_data'] = $view;
+
+  $view = new view();
+  $view->name = 'thscview_group_assignment';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'thsc_activeplayer';
+  $view->human_name = 'THSC Group Assignment';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'THSC Group Assignment';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'role';
+  $handler->display->display_options['access']['role'] = array(
+    4 => '4',
+    5 => '5',
+  );
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'none';
+  $handler->display->display_options['style_plugin'] = 'datatables';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'apid' => 'apid',
+    'player_id' => 'player_id',
+    'group_id' => 'group_id',
+    'team_id' => 'team_id',
+    'views_bulk_operations' => 'views_bulk_operations',
+    'first_name' => 'first_name',
+    'last_name' => 'last_name',
+    'gender' => 'gender',
+    'birthdate' => 'birthdate',
+    'php' => 'php',
+    'payment_made' => 'payment_made',
+    'group' => 'group',
+    'team' => 'team',
+  );
+  $handler->display->display_options['style_options']['default'] = 'first_name';
+  $handler->display->display_options['style_options']['info'] = array(
+    'apid' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'player_id' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'group_id' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'team_id' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'views_bulk_operations' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'first_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'gender' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'birthdate' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'php' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'payment_made' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'group' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'team' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['style_options']['elements'] = array(
+    'search_box' => 1,
+    'table_info' => 1,
+    'save_state' => 0,
+    'table_tools' => 0,
+  );
+  $handler->display->display_options['style_options']['layout'] = array(
+    'autowidth' => 0,
+    'themeroller' => 1,
+    'sdom' => '',
+  );
+  $handler->display->display_options['style_options']['pages'] = array(
+    'pagination_style' => '0',
+    'length_change' => 0,
+    'display_length' => '50',
+  );
+  /* Relationship: THSC Active Player: Related THSC Member */
+  $handler->display->display_options['relationships']['player_id']['id'] = 'player_id';
+  $handler->display->display_options['relationships']['player_id']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['relationships']['player_id']['field'] = 'player_id';
+  $handler->display->display_options['relationships']['player_id']['required'] = TRUE;
+  /* Field: THSC Active Player: Seasonal Player Id */
+  $handler->display->display_options['fields']['apid']['id'] = 'apid';
+  $handler->display->display_options['fields']['apid']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['apid']['field'] = 'apid';
+  $handler->display->display_options['fields']['apid']['exclude'] = TRUE;
+  /* Field: THSC Active Player: Member ID */
+  $handler->display->display_options['fields']['player_id']['id'] = 'player_id';
+  $handler->display->display_options['fields']['player_id']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['player_id']['field'] = 'player_id';
+  $handler->display->display_options['fields']['player_id']['exclude'] = TRUE;
+  /* Field: THSC Active Player: Group Id */
+  $handler->display->display_options['fields']['group_id']['id'] = 'group_id';
+  $handler->display->display_options['fields']['group_id']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['group_id']['field'] = 'group_id';
+  $handler->display->display_options['fields']['group_id']['exclude'] = TRUE;
+  /* Field: THSC Active Player: Team Id */
+  $handler->display->display_options['fields']['team_id']['id'] = 'team_id';
+  $handler->display->display_options['fields']['team_id']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['team_id']['field'] = 'team_id';
+  $handler->display->display_options['fields']['team_id']['exclude'] = TRUE;
+  /* Field: Bulk operations: THSC Active Player */
+  $handler->display->display_options['fields']['views_bulk_operations']['id'] = 'views_bulk_operations';
+  $handler->display->display_options['fields']['views_bulk_operations']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['views_bulk_operations']['field'] = 'views_bulk_operations';
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['display_type'] = '1';
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['enable_select_all_pages'] = 1;
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['row_clickable'] = 1;
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['force_single'] = 0;
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_settings']['entity_load_capacity'] = '10';
+  $handler->display->display_options['fields']['views_bulk_operations']['vbo_operations'] = array(
+    'action::thsc_activeplayer_assign_group_action' => array(
+      'selected' => 1,
+      'postpone_processing' => 0,
+      'skip_confirmation' => 1,
+      'override_label' => 1,
+      'label' => 'Change Group/Team',
+      'settings' => array(
+        'target_group_id' => '0',
+      ),
+    ),
+  );
+  /* Field: THSC Member: First Name */
+  $handler->display->display_options['fields']['first_name']['id'] = 'first_name';
+  $handler->display->display_options['fields']['first_name']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['first_name']['field'] = 'first_name';
+  $handler->display->display_options['fields']['first_name']['relationship'] = 'player_id';
+  $handler->display->display_options['fields']['first_name']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['first_name']['alter']['path'] = 'thsc_player/[player_id]';
+  /* Field: THSC Member: Last Name */
+  $handler->display->display_options['fields']['last_name']['id'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['last_name']['field'] = 'last_name';
+  $handler->display->display_options['fields']['last_name']['relationship'] = 'player_id';
+  $handler->display->display_options['fields']['last_name']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['last_name']['alter']['path'] = 'thsc_player/[player_id]';
+  /* Field: THSC Member: Gender */
+  $handler->display->display_options['fields']['gender']['id'] = 'gender';
+  $handler->display->display_options['fields']['gender']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['gender']['field'] = 'gender';
+  $handler->display->display_options['fields']['gender']['relationship'] = 'player_id';
+  /* Field: THSC Member: Birth Date */
+  $handler->display->display_options['fields']['birthdate']['id'] = 'birthdate';
+  $handler->display->display_options['fields']['birthdate']['table'] = 'thsc_player';
+  $handler->display->display_options['fields']['birthdate']['field'] = 'birthdate';
+  $handler->display->display_options['fields']['birthdate']['relationship'] = 'player_id';
+  $handler->display->display_options['fields']['birthdate']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['birthdate']['date_format'] = 'long';
+  $handler->display->display_options['fields']['birthdate']['second_date_format'] = 'long';
+  /* Field: Global: PHP */
+  $handler->display->display_options['fields']['php']['id'] = 'php';
+  $handler->display->display_options['fields']['php']['table'] = 'views';
+  $handler->display->display_options['fields']['php']['field'] = 'php';
+  $handler->display->display_options['fields']['php']['label'] = 'Age';
+  $handler->display->display_options['fields']['php']['use_php_setup'] = 0;
+  $handler->display->display_options['fields']['php']['php_value'] = 'return intval(format_date($row->birthdate, \'custom\', \'Y\'));';
+  $handler->display->display_options['fields']['php']['php_output'] = '<?php echo intval(format_date(time(), \'custom\', \'Y\')) - $value; ?>';
+  $handler->display->display_options['fields']['php']['use_php_click_sortable'] = '0';
+  $handler->display->display_options['fields']['php']['php_click_sortable'] = '';
+  /* Field: THSC Active Player: Payment Made */
+  $handler->display->display_options['fields']['payment_made']['id'] = 'payment_made';
+  $handler->display->display_options['fields']['payment_made']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['payment_made']['field'] = 'payment_made';
+  $handler->display->display_options['fields']['payment_made']['label'] = 'Paid';
+  $handler->display->display_options['fields']['payment_made']['not'] = 0;
+  /* Field: THSC Active Player: Group */
+  $handler->display->display_options['fields']['group']['id'] = 'group';
+  $handler->display->display_options['fields']['group']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['group']['field'] = 'group';
+  /* Field: THSC Active Player: Team */
+  $handler->display->display_options['fields']['team']['id'] = 'team';
+  $handler->display->display_options['fields']['team']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['fields']['team']['field'] = 'team';
+  /* Contextual filter: THSC Active Player: Season Id */
+  $handler->display->display_options['arguments']['season_id']['id'] = 'season_id';
+  $handler->display->display_options['arguments']['season_id']['table'] = 'thsc_activeplayer';
+  $handler->display->display_options['arguments']['season_id']['field'] = 'season_id';
+  $handler->display->display_options['arguments']['season_id']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['season_id']['default_argument_type'] = 'php';
+  $handler->display->display_options['arguments']['season_id']['default_argument_options']['code'] = 'return variable_get(\'thsc_active_season\', 0);';
+  $handler->display->display_options['arguments']['season_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['season_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['season_id']['summary_options']['items_per_page'] = '25';
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page');
+  $handler->display->display_options['path'] = 'admin/structure/thsc-group-assignment';
+  $handler->display->display_options['menu']['type'] = 'tab';
+  $handler->display->display_options['menu']['title'] = 'THSC Group Assignment';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
+  $export['thscview_group_assignment'] = $view;
 
   return $export;
 }
