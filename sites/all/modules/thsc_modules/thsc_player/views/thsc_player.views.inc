@@ -1,14 +1,15 @@
 <?php
+
 function thsc_player_views_data() {
   $data = array();
-  
+
   $data['thsc_player']['table']['group'] = 'THSC Member';
   $data['thsc_player']['table']['base'] = array(
     'field' => 'player_id',
     'title' => 'THSC Member',
     'weight' => -20
   );
-  
+
   $data['thsc_player']['player_id'] = array(
     'title' => 'Member ID',
     'field' => array(
@@ -34,7 +35,7 @@ function thsc_player_views_data() {
       'handler' => 'views_handler_argument_string'
     )
   );
-  
+
   $data['thsc_player']['last_name'] = array(
     'title' => 'Last Name',
     'field' => array(
@@ -51,7 +52,7 @@ function thsc_player_views_data() {
       'handler' => 'views_handler_argument_string'
     )
   );
-  
+
   $data['thsc_player']['gender'] = array(
     'title' => 'Gender',
     'field' => array(
@@ -68,7 +69,7 @@ function thsc_player_views_data() {
       'handler' => 'views_handler_argument_string'
     )
   );
-  
+
   $data['thsc_player']['birthdate'] = array(
     'title' => 'Birth Date',
     'field' => array(
@@ -82,7 +83,7 @@ function thsc_player_views_data() {
       'handler' => 'views_handler_filter_date'
     )
   );
-  
+
   $data['thsc_player']['created'] = array(
     'title' => 'Created At',
     'field' => array(
@@ -96,6 +97,6 @@ function thsc_player_views_data() {
       'handler' => 'views_handler_filter_date'
     )
   );
-  
+
   return $data;
 }

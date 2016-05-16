@@ -54,8 +54,7 @@ function thsc_player_cron() {
     foreach ( $childless_users as $rec ) {
       user_delete($rec['uid']);
     }
-  }
-  else {
+  } else {
     watchdog('cron', 'THSC Player cron ran with no spam data to delete!', NULL, WATCHDOG_NOTICE);
   }
 }
@@ -89,13 +88,13 @@ function thsc_player_views_data_alter(&$data) {
     )
   );
   $data['thsc_player']['father_email'] = array(
-      'title' => t('Father Email'),
-      'help' => 'From profile:father email address',
-      'field' => array(
-          'handler' => 'thsc_player_views_handler_field_profile2',
-          'group' => 'THSC Member',
-          'click sortable' => FALSE
-      )
+    'title' => t('Father Email'),
+    'help' => 'From profile:father email address',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
   );
   $data['thsc_player']['mother'] = array(
     'title' => t('Mother'),
@@ -107,13 +106,13 @@ function thsc_player_views_data_alter(&$data) {
     )
   );
   $data['thsc_player']['mother_email'] = array(
-      'title' => t('Mother Email'),
-      'help' => 'From profile:mother email address',
-      'field' => array(
-          'handler' => 'thsc_player_views_handler_field_profile2',
-          'group' => 'THSC Member',
-          'click sortable' => FALSE
-      )
+    'title' => t('Mother Email'),
+    'help' => 'From profile:mother email address',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
   );
   $data['thsc_player']['address'] = array(
     'title' => t('Address'),
@@ -127,6 +126,15 @@ function thsc_player_views_data_alter(&$data) {
   $data['thsc_player']['other'] = array(
     'title' => t('Other Information'),
     'help' => 'Render information from profile:other_information',
+    'field' => array(
+      'handler' => 'thsc_player_views_handler_field_profile2',
+      'group' => 'THSC Member',
+      'click sortable' => FALSE
+    )
+  );
+  $data['thsc_player']['age'] = array(
+    'title' => t('Player Age'),
+    'help' => t('Age based on current year, not based on birth day!'),
     'field' => array(
       'handler' => 'thsc_player_views_handler_field_profile2',
       'group' => 'THSC Member',

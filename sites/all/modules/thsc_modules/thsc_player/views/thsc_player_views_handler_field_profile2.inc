@@ -27,6 +27,11 @@ class thsc_player_views_handler_field_profile2 extends views_handler_field {
       $parent = $wrapper->field_parent->value();
 
       switch ($this->field) {
+        case 'age':
+          $birthyear = format_date($player->birthdate, 'custom', 'Y');
+          $current_year = format_date(time(), 'custom', 'Y');
+          return (intval($current_year) - intval($birthyear));
+          break;
         case 'father' :
           $profile2 = profile2_load_by_user($parent, 'father_gardian');
           if (isset($profile2)) {

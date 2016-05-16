@@ -298,6 +298,13 @@ function thsc_group_view($group, $view_mode = 'full') {
   return $group->content;
 }
 
+function thsc_group_views_api() {
+  return array(
+      'api' => 3,
+      'path' => drupal_get_path('module', 'thsc_group') . '/views'
+  );
+}
+
 function thsc_group_field_extra_fields() {
   $return = array();
   $return['thsc_group']['thsc_group'] = array(

@@ -7,7 +7,7 @@
  */
 function thsc_activeplayer_views_data() {
   $data = array();
-  
+
   $data['thsc_activeplayer']['table']['group'] = 'THSC Active Player';
   $data['thsc_activeplayer']['table']['base'] = array(
     'field' => 'apid',
@@ -88,10 +88,45 @@ function thsc_activeplayer_views_data() {
       'handler' => 'views_handler_sort'
     ),
     'argument' => array(
-        'handler' => 'views_handler_argument_numeric',
-        'numeric' => TRUE,
-    ),
+      'handler' => 'views_handler_argument_numeric',
+      'numeric' => TRUE
+    )
   );
-  
+  $data['thsc_activeplayer']['group'] = array(
+    'title' => t('Group'),
+    'help' => 'Group Name',
+    'field' => array(
+      'handler' => 'thsc_activeplayer_views_handler_field_group',
+      'group' => 'THSC Active Player',
+      'click sortable' => TRUE
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric'
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort'
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string'
+    )
+  );
+  $data['thsc_activeplayer']['team'] = array(
+      'title' => t('Team'),
+      'help' => 'Team Name',
+      'field' => array(
+          'handler' => 'thsc_activeplayer_views_handler_field_team',
+          'group' => 'THSC Active Player',
+          'click sortable' => TRUE
+      ),
+      'filter' => array(
+          'handler' => 'views_handler_filter_numeric'
+      ),
+      'sort' => array(
+          'handler' => 'views_handler_sort'
+      ),
+      'argument' => array(
+          'handler' => 'views_handler_argument_string'
+      )
+  );
   return $data;
 }
