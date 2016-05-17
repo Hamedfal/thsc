@@ -1450,7 +1450,21 @@ function thsc_player_debug() {
     $parent = user_load($rec);
     $profile2 = profile2_load_by_user($parent, 'other_information');
     if (isset($profile2) && is_object($profile2)) {
-      dpm($profile2, $rec);
+
+      $wrapper = entity_metadata_wrapper('profile2', $profile2);
+      if ($wrapper) {
+        $volun = $wrapper->field_yes_no->value();
+        if ($volun) {
+          $variables['rendered_data'] = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' .$wrapper->field_home_phone->value();
+        }
+        else {
+          $variables['rendered_data'] = '';
+        }
+      }
+      else {
+        dpm($profile2, 'wrapper failed!');
+      }
+
 //       $content[$rec] = array(
 //         '#theme' => 'thsc_player_other',
 //         'profile' => $profile2
