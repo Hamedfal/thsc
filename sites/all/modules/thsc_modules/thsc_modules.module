@@ -256,7 +256,10 @@ function template_preprocess_thsc_player_other(&$variables) {
     if ($wrapper) {
       $volun = $wrapper->field_yes_no->value();
       if (!empty($volun)) {
-        $variables['rendered_data'] .= 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' . $wrapper->field_home_phone->value();
+        $first = check_plain($wrapper->field_first_name->value());
+        $last = check_plain($wrapper->field_last_name->value());
+        $home = check_plain($wrapper->field_home_phone->value());
+        $variables['rendered_data'] .= 'Volunteer: ' . $first . ' ' . $last . ' ' . $home;
       }
     }
   }
