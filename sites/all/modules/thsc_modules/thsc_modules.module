@@ -248,10 +248,10 @@ function template_preprocess_thsc_player_mother(&$variables) {
   }
 }
 function template_preprocess_thsc_player_other(&$variables) {
-  $variables['rendered_data'] = '';
+  $variables['rendered_data'] = '-';
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $variables['rendered_data'] = $profile->pid . ' - ' . $profile->uid;
+    //$variables['rendered_data'] = $profile->pid . ' - ' . $profile->uid;
     $wrapper = entity_metadata_wrapper('profile2', $profile);
     if ($wrapper) {
       $volun = $wrapper->field_yes_no->value();
