@@ -1443,7 +1443,7 @@ function thsc_player_debug() {
   $query = db_query('SELECT f.field_parent_target_id FROM dr_thsc_activeplayer as ap
     inner join dr_thsc_player as p on ap.player_id = p.player_id
     inner join dr_field_data_field_parent as f on p.player_id = f.entity_id
-    where ap.season_id = 673');
+    where ap.season_id = 673 LIMIT 10');
 
   $variables = array();
   while ($rec = $query->fetchField()) {
