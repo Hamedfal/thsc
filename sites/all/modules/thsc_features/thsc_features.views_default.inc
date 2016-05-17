@@ -825,6 +825,8 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['payment_made']['id'] = 'payment_made';
   $handler->display->display_options['fields']['payment_made']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['payment_made']['field'] = 'payment_made';
+  $handler->display->display_options['fields']['payment_made']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['payment_made']['alter']['path'] = 'thsc_activeplayer/[apid] ';
   $handler->display->display_options['fields']['payment_made']['not'] = 0;
   /* Field: THSC Active Player: Group */
   $handler->display->display_options['fields']['group']['id'] = 'group';
@@ -854,6 +856,19 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['menu']['name'] = 'management';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
+
+  /* Display: Data export */
+  $handler = $view->new_display('views_data_export', 'Data export', 'views_data_export_1');
+  $handler->display->display_options['pager']['type'] = 'some';
+  $handler->display->display_options['style_plugin'] = 'views_data_export_xlsx';
+  $handler->display->display_options['style_options']['provide_file'] = 1;
+  $handler->display->display_options['style_options']['filename'] = 'Group Assignments.xlsx';
+  $handler->display->display_options['style_options']['parent_sort'] = 0;
+  $handler->display->display_options['path'] = 'thsc-group-assignment-xls';
+  $handler->display->display_options['displays'] = array(
+    'page' => 'page',
+    'default' => 0,
+  );
   $export['thscview_group_assignment'] = $view;
 
   return $export;
