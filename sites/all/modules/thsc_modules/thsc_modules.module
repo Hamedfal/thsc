@@ -67,7 +67,6 @@ function thsc_modules_theme() {
     )
   );
 }
-
 function template_preprocess_thsc_team_schedule_print(&$variables) {
   $token_info = token_info();
   $replacements = array();
@@ -186,7 +185,6 @@ function thsc_module_is_parent() {
     return FALSE;
   }
 }
-
 function template_preprocess_thsc_player_address(&$variables) {
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
@@ -203,7 +201,6 @@ function template_preprocess_thsc_player_address(&$variables) {
     $variables['rendered_data'] = '';
   }
 }
-
 function template_preprocess_thsc_player_father(&$variables) {
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
@@ -212,7 +209,7 @@ function template_preprocess_thsc_player_father(&$variables) {
     $lastname = $wrapper->field_last_name->value();
     $home = $wrapper->field_home_phone->value();
     $other = $wrapper->field_other_phone->value();
-    //$email = $wrapper->field_email->value();
+    // $email = $wrapper->field_email->value();
     $variables['rendered_data'] = $firstname . ' ' . $lastname;
     if (!empty($home)) {
       $variables['rendered_data'] .= ', home: ' . $home;
@@ -220,23 +217,22 @@ function template_preprocess_thsc_player_father(&$variables) {
     if (!empty($other)) {
       $variables['rendered_data'] .= ', other: ' . $other;
     }
-//     if (!empty($email)) {
-//       $variables['rendered_data'] .= ', ' . $email;
-//     }
+    // if (!empty($email)) {
+    // $variables['rendered_data'] .= ', ' . $email;
+    // }
   } else {
     $variables['rendered_data'] = '';
   }
 }
-
 function template_preprocess_thsc_player_mother(&$variables) {
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
     $wrapper = entity_metadata_wrapper('profile2', $profile);
-     $firstname = $wrapper->field_first_name->value();
+    $firstname = $wrapper->field_first_name->value();
     $lastname = $wrapper->field_last_name->value();
     $home = $wrapper->field_home_phone->value();
     $other = $wrapper->field_other_phone->value();
-    //$email = $wrapper->field_email->value();
+    // $email = $wrapper->field_email->value();
     $variables['rendered_data'] = $firstname . ' ' . $lastname;
     if (!empty($home)) {
       $variables['rendered_data'] .= ', home: ' . $home;
@@ -244,25 +240,26 @@ function template_preprocess_thsc_player_mother(&$variables) {
     if (!empty($other)) {
       $variables['rendered_data'] .= ', other: ' . $other;
     }
-//     if (!empty($email)) {
-//       $variables['rendered_data'] .= ', ' . $email;
-//     }
+    // if (!empty($email)) {
+    // $variables['rendered_data'] .= ', ' . $email;
+    // }
   } else {
     $variables['rendered_data'] = '';
   }
 }
-
 function template_preprocess_thsc_player_other(&$variables) {
   $variables['rendered_data'] = '';
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $variables['rendered_data'] = $profile->pid . ' - ' . $profile->uid;
-//     $wrapper = entity_metadata_wrapper('profile2', $profile);
-//     if ($wrapper) {
-//       $volun = $wrapper->field_yes_no->value();
-//       if ($volun) {
-//         $variables['rendered_data'] = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' .$wrapper->field_home_phone->value();
-//       }
-//     }
+    $variables['rendered_data'] = '<div>' . $profile->pid . ' - ' . $profile->uid;
+    $wrapper = entity_metadata_wrapper('profile2', $profile);
+    if ($wrapper) {
+      $variables['rendered_data'] .= '<br />wrapper worked';
+      // $volun = $wrapper->field_yes_no->value();
+      // if ($volun) {
+      // $variables['rendered_data'] = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' .$wrapper->field_home_phone->value();
+      // }
+    }
+    $variables['rendered_data'] .= '</div>';
   }
 }
