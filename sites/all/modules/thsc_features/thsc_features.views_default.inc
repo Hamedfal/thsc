@@ -633,9 +633,9 @@ function thsc_features_views_default_views() {
     'gender' => 'gender',
     'birthdate' => 'birthdate',
     'php' => 'php',
+    'payment_made' => 'payment_made',
     'group' => 'group',
     'team' => 'team',
-    'payment_made' => 'payment_made',
   );
   $handler->display->display_options['style_options']['default'] = 'first_name';
   $handler->display->display_options['style_options']['info'] = array(
@@ -697,6 +697,13 @@ function thsc_features_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'payment_made' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'group' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -705,13 +712,6 @@ function thsc_features_views_default_views() {
       'empty_column' => 0,
     ),
     'team' => array(
-      'sortable' => 1,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'payment_made' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -731,9 +731,9 @@ function thsc_features_views_default_views() {
     'sdom' => '',
   );
   $handler->display->display_options['style_options']['pages'] = array(
-    'pagination_style' => '0',
+    'pagination_style' => 'no_pagination',
     'length_change' => 0,
-    'display_length' => '50',
+    'display_length' => '100',
   );
   /* Relationship: THSC Active Player: Related THSC Member */
   $handler->display->display_options['relationships']['player_id']['id'] = 'player_id';
