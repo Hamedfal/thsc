@@ -1445,12 +1445,14 @@ function thsc_player_debug() {
     inner join dr_field_data_field_parent as f on p.player_id = f.entity_id
     where ap.season_id = 673');
 
+  $content = array();
   while ($rec = $query->fetchField()) {
     $parent = user_load($rec);
-    $p = profile2_load_by_user($parent, 'other_information');
-    if (!is_object($p)) {
-      dpm('is not object', $rec);
-    }
+    $profile2 = profile2_load_by_user($parent, 'other_information');
+    $content[$rec] = array(
+      '#theme' => 'thsc_player_other',
+      'profile' => $profile2
+    );
   }
 
 
