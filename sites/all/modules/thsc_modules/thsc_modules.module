@@ -67,6 +67,7 @@ function thsc_modules_theme() {
     )
   );
 }
+
 function template_preprocess_thsc_team_schedule_print(&$variables) {
   $token_info = token_info();
   $replacements = array();

@@ -991,8 +991,8 @@ function thsc_player_form($form, &$form_state, $player) {
   );
 
   field_attach_form('thsc_player', $player, $form, $form_state);
-  // hide the "parent selection" element for regular users (THSC Staff/Managers and administrators will see this)
-  if (thsc_module_is_parent()) {
+  // hide the "parent selection" element
+  if (isset($form['field_parent'])) {
     $form['field_parent']['#type'] = 'hidden';
     $form['field_parent'][LANGUAGE_NONE]['#required'] = 0;
   }

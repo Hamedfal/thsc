@@ -67,14 +67,18 @@ function thsc_activeplayer_views_data() {
   $data['thsc_activeplayer']['payment_made'] = array(
     'title' => 'Payment Made',
     'field' => array(
-      'handler' => 'views_handler_field_boolean'
+      'handler' => 'views_handler_field_boolean',
+      'click sortable' => TRUE
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_boolean_operator',
       'label' => t('Paid'),
       'type' => 'yes-no',
       'use equal' => TRUE
-    )
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
   );
   $data['thsc_activeplayer']['season_id'] = array(
     'title' => 'Season Id',

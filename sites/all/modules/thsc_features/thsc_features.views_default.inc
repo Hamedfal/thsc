@@ -633,9 +633,9 @@ function thsc_features_views_default_views() {
     'gender' => 'gender',
     'birthdate' => 'birthdate',
     'php' => 'php',
-    'payment_made' => 'payment_made',
     'group' => 'group',
     'team' => 'team',
+    'payment_made' => 'payment_made',
   );
   $handler->display->display_options['style_options']['default'] = 'first_name';
   $handler->display->display_options['style_options']['info'] = array(
@@ -697,11 +697,6 @@ function thsc_features_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'payment_made' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
     'group' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -710,6 +705,13 @@ function thsc_features_views_default_views() {
       'empty_column' => 0,
     ),
     'team' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'payment_made' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -743,21 +745,25 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['apid']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['apid']['field'] = 'apid';
   $handler->display->display_options['fields']['apid']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['apid']['separator'] = '';
   /* Field: THSC Active Player: Member ID */
   $handler->display->display_options['fields']['player_id']['id'] = 'player_id';
   $handler->display->display_options['fields']['player_id']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['player_id']['field'] = 'player_id';
   $handler->display->display_options['fields']['player_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['player_id']['separator'] = '';
   /* Field: THSC Active Player: Group Id */
   $handler->display->display_options['fields']['group_id']['id'] = 'group_id';
   $handler->display->display_options['fields']['group_id']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['group_id']['field'] = 'group_id';
   $handler->display->display_options['fields']['group_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['group_id']['separator'] = '';
   /* Field: THSC Active Player: Team Id */
   $handler->display->display_options['fields']['team_id']['id'] = 'team_id';
   $handler->display->display_options['fields']['team_id']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['team_id']['field'] = 'team_id';
   $handler->display->display_options['fields']['team_id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['team_id']['separator'] = '';
   /* Field: Bulk operations: THSC Active Player */
   $handler->display->display_options['fields']['views_bulk_operations']['id'] = 'views_bulk_operations';
   $handler->display->display_options['fields']['views_bulk_operations']['table'] = 'thsc_activeplayer';
@@ -803,8 +809,7 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['birthdate']['table'] = 'thsc_player';
   $handler->display->display_options['fields']['birthdate']['field'] = 'birthdate';
   $handler->display->display_options['fields']['birthdate']['relationship'] = 'player_id';
-  $handler->display->display_options['fields']['birthdate']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['birthdate']['date_format'] = 'long';
+  $handler->display->display_options['fields']['birthdate']['date_format'] = 'uc_store';
   $handler->display->display_options['fields']['birthdate']['second_date_format'] = 'long';
   /* Field: Global: PHP */
   $handler->display->display_options['fields']['php']['id'] = 'php';
@@ -820,7 +825,6 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['payment_made']['id'] = 'payment_made';
   $handler->display->display_options['fields']['payment_made']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['payment_made']['field'] = 'payment_made';
-  $handler->display->display_options['fields']['payment_made']['label'] = 'Paid';
   $handler->display->display_options['fields']['payment_made']['not'] = 0;
   /* Field: THSC Active Player: Group */
   $handler->display->display_options['fields']['group']['id'] = 'group';
