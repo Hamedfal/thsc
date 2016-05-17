@@ -1,3 +1,10 @@
 ; debug in browser:
 
   drupal_set_message('<pre>'. print_r($form_state['values'], TRUE) .'</pre>');
+
+  
+; parent-less children:
+
+select * from dr_field_data_field_parent P
+inner join dr_thsc_player T ON P.entity_id = T.player_id
+where P.field_parent_target_id NOT IN (Select uid from dr_users)
