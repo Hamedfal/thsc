@@ -77,7 +77,7 @@ class thsc_player_views_handler_field_profile2 extends views_handler_field {
               break;
             case 'other' :
               $profile2 = profile2_load_by_user($parent, 'other_information');
-              if (isset($profile2)) {
+              if (isset($profile2) && is_object($profile2)) {
                 return array(
                   '#theme' => 'thsc_player_other',
                   'profile' => $profile2
