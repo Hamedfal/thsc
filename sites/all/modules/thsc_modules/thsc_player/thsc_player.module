@@ -1365,38 +1365,16 @@ function _thsc_player_get_childless_users($older_than_24hrs = FALSE) {
   return $rows;
 }
 function thsc_player_delete_nochild($seconds_after_created, $how_many) {
-  $query = db_select('users', 'u');
-  $sec = intval($seconds_after_created);
-  if (empty($sec)) {
-    $sec = 300;
-  }
-  $query->where('((u.login - u.created) < :seconds or u.uid > 2800) and (u.uid > 0)', array(
-    ':seconds' => $sec
-  ));
-  $query->leftJoin('field_data_field_parent', 'p', 'u.uid = p.field_parent_target_id');
-  $query->fields('u', array(
-    'uid',
-    'name',
-    'mail'
-  ));
-  $query->fields('p', array(
-    'field_parent_target_id'
-  ));
-  $query->where('p.field_parent_target_id IS NULL');
-  $amount = intval($how_many);
-  if (empty($amount)) {
-    $amount = 500;
-  }
-  $query->range(0, $amount);
-  $result = $query->execute();
-  $rec = $result->fetchAssoc();
-  $x = 'Deleting these accounts: <br />';
-  while ( $rec ) {
-    $x .= $rec['uid'] . ' ' . $rec['mail'] . ' ' . $rec['name'] . ' => ' . $rec['field_parent_target_id'] . '<br />';
-    if (!empty($rec['uid'])) {
+  $childless_users = _thsc_player_get_childless_users(TRUE);
+  if (count($childless_users) > 0) {
+    $x = 'Deleting these accounts: <br />';
+    foreach ( $childless_users as $rec ) {
+      $x .= $rec['uid'] . ' ' . $rec['mail'] . ' ' . $rec['name'];
       user_delete($rec['uid']);
     }
-    $rec = $result->fetchAssoc();
+  }
+  else {
+    $x = 'No user to delete!';
   }
 
   return array(
