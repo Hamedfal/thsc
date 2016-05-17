@@ -989,16 +989,19 @@ function thsc_activeplayer_assign_group_action(&$activeplayer, $context) {
 function thsc_activeplayer_form_views_exposed_form_alter(&$form, &$form_state) {
   if (isset($form['#id'])) {
     if (strpos($form['#id'], 'views-exposed-form-thscview-group-assignment') !== FALSE) {
-      $filter = 'group';
+      $filter = 'group_id';
       if (isset($form[$filter]) && $form[$filter]['#type'] != 'select') {
         $form[$filter]['#type'] = 'select';
-        unset($form[$filter]['#size']);
+        if (isset($form[$filter]['#size'])) {
+          unset($form[$filter]['#size']);
+        }
         $target_groups = thsc_group_load_multiple();
         $form[$filter]['#options'] = array(
-            '' => 'Any'
+           '' => 'All Groups',
+           0 => 'Players with No Groups',
         );
         foreach ( $target_groups as $group ) {
-          $form[$filter]['#options'][$group->group_name] = $group->group_name;
+          $form[$filter]['#options'][$group->group_id] = $group->group_name;
         }
       }
     }

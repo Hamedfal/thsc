@@ -43,12 +43,24 @@ function thsc_activeplayer_views_data() {
     'title' => 'Team Id',
     'field' => array(
       'handler' => 'views_handler_field_numeric'
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric'
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort'
     )
   );
   $data['thsc_activeplayer']['group_id'] = array(
     'title' => 'Group Id',
     'field' => array(
       'handler' => 'views_handler_field_numeric'
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric'
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort'
     )
   );
   $data['thsc_activeplayer']['registered_at'] = array(
@@ -77,8 +89,8 @@ function thsc_activeplayer_views_data() {
       'use equal' => TRUE
     ),
     'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
+      'handler' => 'views_handler_sort'
+    )
   );
   $data['thsc_activeplayer']['season_id'] = array(
     'title' => 'Season Id',
@@ -115,22 +127,22 @@ function thsc_activeplayer_views_data() {
     )
   );
   $data['thsc_activeplayer']['team'] = array(
-      'title' => t('Team'),
-      'help' => 'Team Name',
-      'field' => array(
-          'handler' => 'thsc_activeplayer_views_handler_field_team',
-          'group' => 'THSC Active Player',
-          'click sortable' => TRUE
-      ),
-      'filter' => array(
-          'handler' => 'views_handler_filter_numeric'
-      ),
-      'sort' => array(
-          'handler' => 'views_handler_sort'
-      ),
-      'argument' => array(
-          'handler' => 'views_handler_argument_string'
-      )
+    'title' => t('Team'),
+    'help' => 'Team Name',
+    'field' => array(
+      'handler' => 'thsc_activeplayer_views_handler_field_team',
+      'group' => 'THSC Active Player',
+      'click sortable' => TRUE
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric'
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort'
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string'
+    )
   );
   return $data;
 }
