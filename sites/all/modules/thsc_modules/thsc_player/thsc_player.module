@@ -1455,11 +1455,15 @@ function thsc_player_debug() {
       if ($wrapper) {
         $volun = $wrapper->field_yes_no->value();
         if ($volun) {
-          $variables['rendered_data'] = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' .$wrapper->field_home_phone->value();
+          $s = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' .$wrapper->field_home_phone->value();
         }
         else {
-          $variables['rendered_data'] = '';
+          $s = '(nothing)';
         }
+        $content[$rec] = array(
+          '#type' => 'markup',
+          '#markup' => '<div>'. $rec . ' : ' . $s . '</div>'
+        );
       }
       else {
         dpm($profile2, 'wrapper failed!');
