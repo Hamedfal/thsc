@@ -1307,7 +1307,7 @@ function thsc_player_users_without_child() {
     'User ID',
     'Name',
     'EMail',
-    l('Delete more 24 hours old', 'thsc/delete_nochild/4000/4000')
+    l('Delete Accounts older than 5 minutes', 'thsc/delete_nochild/4000/4000')
   );
   $accounts = _thsc_player_get_childless_users();
   $rows = array();
