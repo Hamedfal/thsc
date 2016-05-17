@@ -251,18 +251,13 @@ function template_preprocess_thsc_player_other(&$variables) {
   $variables['rendered_data'] = '';
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $variables['rendered_data'] = '<div>' . $profile->pid . ' - ' . $profile->uid;
+    // $variables['rendered_data'] = '<div>' . $profile->pid . ' - ' . $profile->uid;
     $wrapper = entity_metadata_wrapper('profile2', $profile);
     if ($wrapper) {
       $volun = $wrapper->field_yes_no->value();
       if (!empty($volun)) {
-        $variables['rendered_data'] .= 'Volunteer: ' . $wrapper->field_first_name->value()
-          . ' ' . $wrapper->field_last_name->value()
-          . ' ' .$wrapper->field_home_phone->value();
+        $variables['rendered_data'] = 'Volunteer: ' . $wrapper->field_first_name->value() . ' ' . $wrapper->field_last_name->value() . ' ' . $wrapper->field_home_phone->value();
       }
-      // if ($volun) {
-      // }
     }
-    $variables['rendered_data'] .= '</div>';
   }
 }
