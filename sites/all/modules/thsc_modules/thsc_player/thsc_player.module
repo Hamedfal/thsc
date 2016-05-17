@@ -1464,15 +1464,15 @@ function thsc_player_debug() {
         }
       }
 
-      $content[$rec] = array(
-          '#type' => 'markup',
-          '#markup' => $s
-      );
-
 //       $content[$rec] = array(
-//         '#theme' => 'thsc_player_other',
-//         'profile' => $profile2
+//           '#type' => 'markup',
+//           '#markup' => $s
 //       );
+
+      $content[$rec] = array(
+        '#theme' => 'thsc_player_other',
+        'profile' => $profile2
+      );
     }
   }
 
