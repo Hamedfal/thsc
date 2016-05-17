@@ -1439,21 +1439,23 @@ function thsc_player_all_members_report() {
  * @return string[]|string[][]|Either[]
  */
 function thsc_player_debug() {
-  // $arg2 = arg(2);
-  // $uid = isset($arg2) ? $arg2 : 1;
-  // $account = user_load($uid);
-  // $profile2 = profile2_load_by_user($account, 'address');
-  // if (!empty($profile2)) {
-  // $content['test'] = array(
-  // '#theme' => 'thsc_player_address',
-  // 'profile' => $profile2
-  // );
-  // } else {
-  // $content['test'] = array(
-  // '#type' => 'markup',
-  // '#markup' => 'No profile2 available'
-  // );
-  // }
+
+  $query = db_query('SELECT f.field_parent_target_id FROM dr_thsc_activeplayer as ap
+    inner join dr_thsc_player as p on ap.player_id = p.player_id
+    inner join dr_field_data_field_parent as f on p.player_id = f.entity_id
+    where ap.season_id = 673');
+
+  while ($rec = $query->fetchField()) {
+    $parent = user_load($rec);
+    $p = profile2_load_by_user($parent, 'other_information');
+    if (!is_object($p)) {
+      dpm('is not object', $rec);
+    }
+  }
+
+
+  //profile2_load_by_user($parent, 'other_information');
+
   $content['debug'] = array(
     '#type' => 'markup',
     '#markup' => 'Debugging Page'
