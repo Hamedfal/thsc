@@ -826,7 +826,7 @@ function thsc_features_views_default_views() {
   $handler->display->display_options['fields']['payment_made']['table'] = 'thsc_activeplayer';
   $handler->display->display_options['fields']['payment_made']['field'] = 'payment_made';
   $handler->display->display_options['fields']['payment_made']['alter']['make_link'] = TRUE;
-  $handler->display->display_options['fields']['payment_made']['alter']['path'] = 'thsc_activeplayer/[apid] ';
+  $handler->display->display_options['fields']['payment_made']['alter']['path'] = 'thsc_activeplayer/[apid]';
   $handler->display->display_options['fields']['payment_made']['not'] = 0;
   /* Field: THSC Active Player: Group */
   $handler->display->display_options['fields']['group']['id'] = 'group';
