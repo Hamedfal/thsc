@@ -188,15 +188,19 @@ function thsc_module_is_parent() {
 function template_preprocess_thsc_player_address(&$variables) {
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $wrapper = entity_metadata_wrapper('profile2', $profile);
-    $street = $wrapper->field_street->value();
-    $aptno = $wrapper->field_apt_no->value();
-    if (!empty($aptno)) {
-      $street .= ' #' . $aptno;
+    if ($profile) {
+      $wrapper = entity_metadata_wrapper('profile2', $profile);
+      if ($wrapper) {
+        $street = $wrapper->field_street->value();
+        $aptno = $wrapper->field_apt_no->value();
+        if (!empty($aptno)) {
+          $street .= ' #' . $aptno;
+        }
+        $city = $wrapper->field_city->value();
+        $postalcode = $wrapper->field_postal_code->value();
+        $variables['rendered_data'] = $street . ', ' . $city . ' ' . $postalcode;
+      }
     }
-    $city = $wrapper->field_city->value();
-    $postalcode = $wrapper->field_postal_code->value();
-    $variables['rendered_data'] = $street . ', ' . $city . ' ' . $postalcode;
   } else {
     $variables['rendered_data'] = '';
   }
@@ -204,22 +208,26 @@ function template_preprocess_thsc_player_address(&$variables) {
 function template_preprocess_thsc_player_father(&$variables) {
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $wrapper = entity_metadata_wrapper('profile2', $profile);
-    $firstname = $wrapper->field_first_name->value();
-    $lastname = $wrapper->field_last_name->value();
-    $home = $wrapper->field_home_phone->value();
-    $other = $wrapper->field_other_phone->value();
-    // $email = $wrapper->field_email->value();
-    $variables['rendered_data'] = $firstname . ' ' . $lastname;
-    if (!empty($home)) {
-      $variables['rendered_data'] .= ', home: ' . $home;
+    if ($profile) {
+      $wrapper = entity_metadata_wrapper('profile2', $profile);
+      if ($wrapper) {
+        $firstname = $wrapper->field_first_name->value();
+        $lastname = $wrapper->field_last_name->value();
+        $home = $wrapper->field_home_phone->value();
+        $other = $wrapper->field_other_phone->value();
+        // $email = $wrapper->field_email->value();
+        $variables['rendered_data'] = $firstname . ' ' . $lastname;
+        if (!empty($home)) {
+          $variables['rendered_data'] .= ', home: ' . $home;
+        }
+        if (!empty($other)) {
+          $variables['rendered_data'] .= ', other: ' . $other;
+        }
+      }
+      // if (!empty($email)) {
+      // $variables['rendered_data'] .= ', ' . $email;
+      // }
     }
-    if (!empty($other)) {
-      $variables['rendered_data'] .= ', other: ' . $other;
-    }
-    // if (!empty($email)) {
-    // $variables['rendered_data'] .= ', ' . $email;
-    // }
   } else {
     $variables['rendered_data'] = '';
   }
@@ -227,22 +235,26 @@ function template_preprocess_thsc_player_father(&$variables) {
 function template_preprocess_thsc_player_mother(&$variables) {
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $wrapper = entity_metadata_wrapper('profile2', $profile);
-    $firstname = $wrapper->field_first_name->value();
-    $lastname = $wrapper->field_last_name->value();
-    $home = $wrapper->field_home_phone->value();
-    $other = $wrapper->field_other_phone->value();
-    // $email = $wrapper->field_email->value();
-    $variables['rendered_data'] = $firstname . ' ' . $lastname;
-    if (!empty($home)) {
-      $variables['rendered_data'] .= ', home: ' . $home;
+    if ($profile) {
+      $wrapper = entity_metadata_wrapper('profile2', $profile);
+      if ($wrapper) {
+        $firstname = $wrapper->field_first_name->value();
+        $lastname = $wrapper->field_last_name->value();
+        $home = $wrapper->field_home_phone->value();
+        $other = $wrapper->field_other_phone->value();
+        // $email = $wrapper->field_email->value();
+        $variables['rendered_data'] = $firstname . ' ' . $lastname;
+        if (!empty($home)) {
+          $variables['rendered_data'] .= ', home: ' . $home;
+        }
+        if (!empty($other)) {
+          $variables['rendered_data'] .= ', other: ' . $other;
+        }
+      }
+      // if (!empty($email)) {
+      // $variables['rendered_data'] .= ', ' . $email;
+      // }
     }
-    if (!empty($other)) {
-      $variables['rendered_data'] .= ', other: ' . $other;
-    }
-    // if (!empty($email)) {
-    // $variables['rendered_data'] .= ', ' . $email;
-    // }
   } else {
     $variables['rendered_data'] = '';
   }
@@ -251,14 +263,16 @@ function template_preprocess_thsc_player_other(&$variables) {
   $variables['rendered_data'] = '-';
   if (isset($variables['element']['profile'])) {
     $profile = $variables['element']['profile'];
-    $wrapper = entity_metadata_wrapper('profile2', $profile);
-    if ($wrapper) {
-      $volun = $wrapper->field_yes_no->value();
-      if (!empty($volun)) {
-        $first = check_plain($wrapper->field_first_name->value());
-        $last = check_plain($wrapper->field_last_name->value());
-        $home = check_plain($wrapper->field_home_phone->value());
-        $variables['rendered_data'] .= 'Volunteer: ' . $first . ' ' . $last . ' ' . $home;
+    if ($profile) {
+      $wrapper = entity_metadata_wrapper('profile2', $profile);
+      if ($wrapper) {
+        $volun = $wrapper->field_yes_no->value();
+        if (!empty($volun)) {
+          $first = check_plain($wrapper->field_first_name->value());
+          $last = check_plain($wrapper->field_last_name->value());
+          $home = check_plain($wrapper->field_home_phone->value());
+          $variables['rendered_data'] .= 'Volunteer: ' . $first . ' ' . $last . ' ' . $home;
+        }
       }
     }
   }
