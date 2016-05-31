@@ -992,7 +992,7 @@ function thsc_player_form($form, &$form_state, $player) {
 
   field_attach_form('thsc_player', $player, $form, $form_state);
   // hide the "parent selection" element
-  if (isset($form['field_parent'])) {
+  if (isset($form['field_parent']) && $GLOBALS['user']->uid != 1) {
     $form['field_parent']['#type'] = 'hidden';
     $form['field_parent'][LANGUAGE_NONE]['#required'] = 0;
   }
